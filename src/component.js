@@ -12,13 +12,13 @@ export default class Component {
     this._state = opts.state;
     this._renderFunc = opts.render;
 
-    for (let name in opts.components) {
+    Object.keys(opts.components).forEach(name => {
       this._registerComponent(name, opts.components[name]);
-    }
+    });
 
-    for (let method in opts.methods) {
+    Object.keys(opts.methods).forEach(method => {
       this[method] = opts.methods[method].bind(this);
-    }
+    });
   }
 
   _registerComponent(name, component) {

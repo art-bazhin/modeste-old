@@ -16,12 +16,12 @@ export function createDom(vDom, prefix) {
 
         element._justProps = {};
 
-        for (let prop in vDom.props) {
+        Object.keys(vDom.props).forEach(prop => {
           if (vDom.props[prop] !== null) {
             element[prop] = vDom.props[prop];
             element._justProps[prop] = vDom.props[prop];
           }
-        }
+        });
       }
 
       if (!(vDom.children instanceof Array)) vDom.children = [];
@@ -38,9 +38,9 @@ export function updateDom(dom, vDom, prefix) {
   switch (dom.nodeType) {
     case 1:
       let props = [];
-      for (let prop in dom._justProps) {
+      Object.keys(dom._justProps).forEach(prop => {
         props.push(prop);
-      }
+      });
 
       if (vDom.props) {
         if (vDom.props.className) {
@@ -52,7 +52,7 @@ export function updateDom(dom, vDom, prefix) {
 
         if (!dom._justProps) dom._justProps = {};
 
-        for (let prop in vDom.props) {
+        Object.keys(vDom.props).forEach(prop => {
           if (vDom.props[prop] === null) {
             dom[prop] = null;
             delete dom._justProps[prop];
@@ -65,7 +65,7 @@ export function updateDom(dom, vDom, prefix) {
           if (index > -1) {
             props.splice(index, 1);
           }
-        }
+        });
       }
 
       props.forEach(prop => {

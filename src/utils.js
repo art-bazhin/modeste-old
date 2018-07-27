@@ -1,7 +1,7 @@
 export function updateState(original, update) {
   let stateChanged = false;
 
-  for (let prop in update) {
+  Object.keys(update).forEach(prop => {
     if (
       typeof original[prop] === 'object' &&
       typeof update[prop] === 'object'
@@ -11,7 +11,7 @@ export function updateState(original, update) {
       original[prop] = update[prop];
       stateChanged = true;
     }
-  }
+  });
 
   return stateChanged;
 }
@@ -44,9 +44,9 @@ export function processStyle(_style, prefix) {
 
   function processRule(rule) {
     styleString += rule.selector.replace(regex, repl) + '{';
-    for (let prop in rule.props) {
+    Object.keys(rule.props).forEach(prop => {
       styleString += prop + ':' + rule.props[prop] + ';';
-    }
+    });
     styleString += '}';
   }
 }
