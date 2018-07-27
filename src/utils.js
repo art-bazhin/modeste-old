@@ -16,12 +16,12 @@ export function updateState(original, update) {
   return stateChanged;
 }
 
-export function processStyle(_style, prefix) {
+export function processStyle(_style, id) {
   let styleElement = document.createElement('style');
   let style = _style;
   let styleString = '';
-  let regex = /\._/gm;
-  let repl = '.' + prefix;
+  let regex = /:\$/gm;
+  let repl = '.' + id;
 
   if (style instanceof Array) {
     style.forEach(elem => {

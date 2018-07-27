@@ -11,7 +11,12 @@ export default class Component {
     this.prefix = Component.generatePrefix(this.name);
     if (opts.style) processStyle(opts.style(J), this.prefix);
 
-    this._state = opts.state();
+    if (typeof opts.state === 'function') {
+      this._state = opts.state();
+    } else {
+      this._state = opts.state;
+    }
+
     this._renderFunc = opts.render.bind(this);
 
     if (opts.components) {
@@ -27,13 +32,15 @@ export default class Component {
     }
 
     this.componentPool = [];
+
+    if (this.created) this.created();
   }
 
   registerComponent(name, component) {
     if (!this.components) this.components = {};
 
     if (!this.components.name) {
-      this.components.name = () => {
+      this.components[name] = () => {
         return new Component(name, component, this.J);
       };
     }
@@ -70,7 +77,7 @@ export default class Component {
 
     idList[id] = true;
 
-    return name + id + '_';
+    return name + id;
   }
 
   static generateId() {
