@@ -1,16 +1,23 @@
-export function createDom(vDom, prefix) {
+export function createDom(vDom, parent) {
   switch (typeof vDom) {
     case 'string':
       return document.createTextNode(vDom);
 
     case 'object':
+      if (vDom.component) {
+        let component = new parent.components[vDom.component]();
+        parent.componentPool.push(component);
+        component.render();
+        return component.dom;
+      }
+
       let dom = document.createElement(vDom.tag);
 
       if (vDom.props) {
         if (vDom.props.className) {
           vDom.props.className = getPrefixedClassString(
             vDom.props.className,
-            prefix
+            parent.prefix
           );
         }
 
@@ -29,13 +36,24 @@ export function createDom(vDom, prefix) {
 
       if (!(vDom.children instanceof Array)) vDom.children = [];
       vDom.children = vDom.children.filter(elem => elem !== null);
-      vDom.children.forEach(child => dom.appendChild(createDom(child, prefix)));
+      vDom.children.forEach(child => dom.appendChild(createDom(child, parent)));
 
       return dom;
   }
 }
 
-export function updateDom(dom, vDom, prefix) {
+export function updateDom(dom, vDom, parent) {
+  if (!sameTypeAndTag(dom, vDom)) {
+    let newDom = createDom(vDom, parent);
+    dom.parentNode.replaceChild(newDom, dom);
+
+    if (parent.dom === dom) {
+      parent.dom = newDom;
+    }
+
+    return;
+  }
+
   switch (dom.nodeType) {
     case 1:
       let props = [];
@@ -49,7 +67,7 @@ export function updateDom(dom, vDom, prefix) {
         if (vDom.props.className) {
           vDom.props.className = getPrefixedClassString(
             vDom.props.className,
-            prefix
+            parent.prefix
           );
         }
 
@@ -85,11 +103,11 @@ export function updateDom(dom, vDom, prefix) {
 
       vDom.children.forEach((child, index) => {
         if (!dom.childNodes[index]) {
-          dom.appendChild(createDom(child, prefix));
-        } else if (sameType(dom.childNodes[index], child)) {
-          updateDom(dom.childNodes[index], child, prefix);
+          dom.appendChild(createDom(child, parent));
+        } else if (sameTypeAndTag(dom.childNodes[index], child)) {
+          updateDom(dom.childNodes[index], child, parent);
         } else {
-          dom.replaceChild(createDom(child, prefix), dom.childNodes[index]);
+          dom.replaceChild(createDom(child, parent), dom.childNodes[index]);
         }
       });
 
@@ -107,11 +125,14 @@ export function updateDom(dom, vDom, prefix) {
   }
 }
 
-function sameType(dom, vDom) {
-  return (
-    (typeof vDom === 'object' && dom.nodeType === 1) ||
-    (typeof vDom === 'string' && dom.nodeType === 3)
-  );
+function sameTypeAndTag(dom, vDom) {
+  if (typeof vDom === 'object' && dom.nodeType === 1) {
+    return vDom.tag.toUpperCase() === dom.tagName;
+  } else if (typeof vDom === 'string' && dom.nodeType === 3) {
+    return true;
+  }
+
+  return false;
 }
 
 function getPrefixedClassString(string, prefix) {

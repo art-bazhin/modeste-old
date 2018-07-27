@@ -1,16 +1,18 @@
 import { createDom, updateDom } from './dom';
 import { processStyle, updateState } from './utils';
 
+let idList = {};
+
 export default class Component {
   constructor(name, opts, J) {
     this.J = J ? J : this;
     this.name = name;
 
-    this.prefix = this.name + (Date.now() % 10000) + '_';
+    this.prefix = Component.generatePrefix(this.name);
     if (opts.style) processStyle(opts.style(J), this.prefix);
 
-    this._state = opts.state;
-    this._renderFunc = opts.render;
+    this._state = opts.state();
+    this._renderFunc = opts.render.bind(this);
 
     if (opts.components) {
       Object.keys(opts.components).forEach(name => {
@@ -23,26 +25,30 @@ export default class Component {
         this[method] = opts.methods[method].bind(this);
       });
     }
+
+    this.componentPool = [];
   }
 
   registerComponent(name, component) {
-    if (!this._componentConstructors) this._componentConstructors = {};
+    if (!this.components) this.components = {};
 
-    if (!this._componentConstructors.name) {
-      this._componentConstructors.name = () => {
+    if (!this.components.name) {
+      this.components.name = () => {
         return new Component(name, component, this.J);
       };
     }
   }
 
   render() {
-    let vDom = this._renderFunc(this.J);
+    let vDom = this._renderFunc();
 
-    if (!this.domNode) {
-      this.domNode = createDom(vDom, this.prefix);
+    if (!this.dom) {
+      this.dom = createDom(vDom, this);
     } else {
-      updateDom(this.domNode, vDom, this.prefix);
+      updateDom(this.dom, vDom, this);
     }
+
+    this.dom._justComponent = this;
   }
 
   set state(state) {
@@ -53,5 +59,21 @@ export default class Component {
 
   get state() {
     return this._state;
+  }
+
+  static generatePrefix(name) {
+    let id;
+
+    do {
+      id = Component.generateId();
+    } while (idList[id]);
+
+    idList[id] = true;
+
+    return name + id + '_';
+  }
+
+  static generateId() {
+    return (Math.random() * 10000).toFixed(0);
   }
 }
