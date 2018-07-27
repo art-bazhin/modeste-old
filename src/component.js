@@ -13,7 +13,7 @@ export default class Component {
     this._renderFunc = opts.render;
 
     Object.keys(opts.components).forEach(name => {
-      this._registerComponent(name, opts.components[name]);
+      this.registerComponent(name, opts.components[name]);
     });
 
     Object.keys(opts.methods).forEach(method => {
@@ -21,7 +21,7 @@ export default class Component {
     });
   }
 
-  _registerComponent(name, component) {
+  registerComponent(name, component) {
     if (!this._componentConstructors) this._componentConstructors = {};
 
     if (!this._componentConstructors.name) {
@@ -31,7 +31,7 @@ export default class Component {
     }
   }
 
-  _render() {
+  render() {
     let vDom = this._renderFunc(this.J);
 
     if (!this.domNode) {

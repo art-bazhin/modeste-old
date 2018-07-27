@@ -9,7 +9,7 @@ export default class Just extends Component {
   }
 
   render() {
-    super._render();
+    super.render();
     if (this.wrap.childNodes.length === 0) {
       this.wrap.appendChild(this.domNode);
     }
