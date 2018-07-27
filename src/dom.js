@@ -1,4 +1,8 @@
 export function createDom(vDom, parent) {
+  if (!vDom) {
+    return document.createComment('');
+  }
+
   switch (typeof vDom) {
     case 'string':
       return document.createTextNode(vDom);
@@ -34,7 +38,6 @@ export function createDom(vDom, parent) {
       });
 
       if (!(vDom.children instanceof Array)) vDom.children = [];
-      vDom.children = vDom.children.filter(elem => elem !== null);
       vDom.children.forEach(child => dom.appendChild(createDom(child, parent)));
 
       return dom;
@@ -121,7 +124,6 @@ export function updateDom(dom, vDom, parent) {
 
       // Process child nodes
       if (!(vDom.children instanceof Array)) vDom.children = [];
-      vDom.children = vDom.children.filter(elem => elem !== null);
 
       vDom.children.forEach((child, index) => {
         if (!dom.childNodes[index]) {
@@ -148,6 +150,8 @@ export function updateDom(dom, vDom, parent) {
 }
 
 function sameTypeAndTag(dom, vDom) {
+  if (!vDom) return dom.nodeType === 8;
+
   if (typeof vDom === 'object' && dom.nodeType === 1) {
     return vDom.tag.toUpperCase() === dom.tagName;
   } else if (typeof vDom === 'string' && dom.nodeType === 3) {
