@@ -12,13 +12,17 @@ export default class Component {
     this._state = opts.state;
     this._renderFunc = opts.render;
 
-    Object.keys(opts.components).forEach(name => {
-      this.registerComponent(name, opts.components[name]);
-    });
+    if (opts.components) {
+      Object.keys(opts.components).forEach(name => {
+        this.registerComponent(name, opts.components[name]);
+      });
+    }
 
-    Object.keys(opts.methods).forEach(method => {
-      this[method] = opts.methods[method].bind(this);
-    });
+    if (opts.methods) {
+      Object.keys(opts.methods).forEach(method => {
+        this[method] = opts.methods[method].bind(this);
+      });
+    }
   }
 
   registerComponent(name, component) {
@@ -43,7 +47,7 @@ export default class Component {
 
   set state(state) {
     if (updateState(this._state, state)) {
-      this._render();
+      this.render();
     }
   }
 

@@ -4,7 +4,7 @@ export function createDom(vDom, prefix) {
       return document.createTextNode(vDom);
 
     case 'object':
-      let element = document.createElement(vDom.tag);
+      let dom = document.createElement(vDom.tag);
 
       if (vDom.props) {
         if (vDom.props.className) {
@@ -14,23 +14,24 @@ export function createDom(vDom, prefix) {
           );
         }
 
-        element._justProps = {};
+        dom._justProps = {};
 
         Object.keys(vDom.props).forEach(prop => {
           if (vDom.props[prop] !== null) {
-            element[prop] = vDom.props[prop];
-            element._justProps[prop] = vDom.props[prop];
+            dom[prop] = vDom.props[prop];
+            dom._justProps[prop] = vDom.props[prop];
           }
         });
       }
 
+      createCustomAttrs(dom, vDom, 'data', 'data-');
+      createCustomAttrs(dom, vDom, 'aria', 'aria-');
+
       if (!(vDom.children instanceof Array)) vDom.children = [];
       vDom.children = vDom.children.filter(elem => elem !== null);
-      vDom.children.forEach(child =>
-        element.appendChild(createDom(child, prefix))
-      );
+      vDom.children.forEach(child => dom.appendChild(createDom(child, prefix)));
 
-      return element;
+      return dom;
   }
 }
 
@@ -38,9 +39,11 @@ export function updateDom(dom, vDom, prefix) {
   switch (dom.nodeType) {
     case 1:
       let props = [];
-      Object.keys(dom._justProps).forEach(prop => {
-        props.push(prop);
-      });
+      if (dom._justProps) {
+        Object.keys(dom._justProps).forEach(prop => {
+          props.push(prop);
+        });
+      }
 
       if (vDom.props) {
         if (vDom.props.className) {
@@ -72,6 +75,10 @@ export function updateDom(dom, vDom, prefix) {
         dom[prop] = null;
         delete dom._justProps[prop];
       });
+
+      let attrs = dom.getAttributeNames();
+      updateCustomAttrs(dom, vDom, attrs, 'data', 'data-');
+      updateCustomAttrs(dom, vDom, attrs, 'aria', 'aria-');
 
       if (!(vDom.children instanceof Array)) vDom.children = [];
       vDom.children = vDom.children.filter(elem => elem !== null);
@@ -119,4 +126,27 @@ function getPrefixedClassString(string, prefix) {
   }
 
   return className;
+}
+
+function updateCustomAttrs(dom, vDom, attrNames, vDomPropName, prefix) {
+  let attrs = attrNames.filter(name => name.substr(0, 5) === prefix);
+
+  if (vDom[vDomPropName]) {
+    Object.keys(vDom[vDomPropName]).forEach(attr => {
+      dom.setAttribute(prefix + attr, vDom[vDomPropName][attr]);
+
+      let index = attrs.indexOf(prefix + attr);
+      attrs.splice(index, 1);
+    });
+  }
+
+  attrs.forEach(attr => dom.removeAttribute(attr));
+}
+
+function createCustomAttrs(dom, vDom, vDomPropName, prefix) {
+  if (vDom[vDomPropName]) {
+    Object.keys(vDom[vDomPropName]).forEach(attr => {
+      dom.setAttribute(prefix + attr, vDom[vDomPropName][attr]);
+    });
+  }
 }
