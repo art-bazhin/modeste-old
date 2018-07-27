@@ -2,8 +2,11 @@ export function updateState(original, update) {
   let stateChanged = false;
 
   for (let prop in update) {
-    if (typeof original[prop] === 'object' && typeof update[prop] === 'object') {
-      stateChanged |= updateState(original[prop], update[prop])
+    if (
+      typeof original[prop] === 'object' &&
+      typeof update[prop] === 'object'
+    ) {
+      stateChanged |= updateState(original[prop], update[prop]);
     } else if (original[prop] !== update[prop]) {
       original[prop] = update[prop];
       stateChanged = true;

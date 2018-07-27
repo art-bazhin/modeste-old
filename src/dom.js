@@ -8,7 +8,10 @@ export function createDom(vDom, prefix) {
 
       if (vDom.props) {
         if (vDom.props.className) {
-          vDom.props.className = getPrefixedClassString(vDom.props.className, prefix);
+          vDom.props.className = getPrefixedClassString(
+            vDom.props.className,
+            prefix
+          );
         }
 
         element._justProps = {};
@@ -23,7 +26,9 @@ export function createDom(vDom, prefix) {
 
       if (!(vDom.children instanceof Array)) vDom.children = [];
       vDom.children = vDom.children.filter(elem => elem !== null);
-      vDom.children.forEach(child => element.appendChild(createDom(child, prefix)));
+      vDom.children.forEach(child =>
+        element.appendChild(createDom(child, prefix))
+      );
 
       return element;
   }
@@ -39,7 +44,10 @@ export function updateDom(dom, vDom, prefix) {
 
       if (vDom.props) {
         if (vDom.props.className) {
-          vDom.props.className = getPrefixedClassString(vDom.props.className, prefix);
+          vDom.props.className = getPrefixedClassString(
+            vDom.props.className,
+            prefix
+          );
         }
 
         if (!dom._justProps) dom._justProps = {};
@@ -93,8 +101,10 @@ export function updateDom(dom, vDom, prefix) {
 }
 
 function sameType(dom, vDom) {
-  return ((typeof vDom === 'object' && dom.nodeType === 1) ||
-    (typeof vDom === 'string' && dom.nodeType === 3));
+  return (
+    (typeof vDom === 'object' && dom.nodeType === 1) ||
+    (typeof vDom === 'string' && dom.nodeType === 3)
+  );
 }
 
 function getPrefixedClassString(string, prefix) {

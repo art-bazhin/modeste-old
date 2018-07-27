@@ -26,8 +26,8 @@ export default class Component {
 
     if (!this._componentConstructors.name) {
       this._componentConstructors.name = () => {
-        return new Component(name, component, this.J)
-      }
+        return new Component(name, component, this.J);
+      };
     }
   }
 
@@ -39,16 +39,15 @@ export default class Component {
     } else {
       updateDom(this.domNode, vDom, this.prefix);
     }
-  };
+  }
 
   set state(state) {
     if (updateState(this._state, state)) {
       this._render();
     }
-  };
+  }
 
   get state() {
     return this._state;
   }
 }
-
