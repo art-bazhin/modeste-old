@@ -10,12 +10,11 @@ export function createDom(vDom, parent) {
     case 'object':
       if (vDom.component) {
         let component = new parent.components[vDom.component]();
-        parent.componentPool.push(component);
         component.render();
         return component.dom;
       }
 
-      prepareVDom(vDom, parent.prefix);
+      prepareVDom(vDom, parent.scopeClass);
 
       let dom = document.createElement(vDom.tag);
 
@@ -45,9 +44,20 @@ export function createDom(vDom, parent) {
 }
 
 export function updateDom(dom, vDom, parent) {
+  if (vDom && vDom.component) {
+    updateComponentDom(dom, vDom, parent);
+    return;
+  }
+
   if (!sameTypeAndTag(dom, vDom)) {
+    if (dom._justId) {
+      delete parent.componentPool[dom._justId];
+    }
+
     let newDom = createDom(vDom, parent);
     dom.parentNode.replaceChild(newDom, dom);
+
+    clearDomProps(dom);
 
     if (parent.dom === dom) {
       parent.dom = newDom;
@@ -58,7 +68,7 @@ export function updateDom(dom, vDom, parent) {
 
   switch (dom.nodeType) {
     case 1:
-      prepareVDom(vDom, parent.prefix);
+      prepareVDom(vDom, parent.scopeClass);
 
       // Process attrs
       let attrs = [];
@@ -128,15 +138,15 @@ export function updateDom(dom, vDom, parent) {
       vDom.children.forEach((child, index) => {
         if (!dom.childNodes[index]) {
           dom.appendChild(createDom(child, parent));
-        } else if (sameTypeAndTag(dom.childNodes[index], child)) {
-          updateDom(dom.childNodes[index], child, parent);
         } else {
-          dom.replaceChild(createDom(child, parent), dom.childNodes[index]);
+          updateDom(dom.childNodes[index], child, parent);
         }
       });
 
       while (dom.childNodes[vDom.children.length]) {
-        dom.removeChild(dom.childNodes[vDom.children.length]);
+        let child = dom.childNodes[vDom.children.length];
+        dom.removeChild(child);
+        clearDomProps(child);
       }
 
       break;
@@ -147,6 +157,35 @@ export function updateDom(dom, vDom, parent) {
       }
       break;
   }
+}
+
+function updateComponentDom(dom, vDom, parent) {
+  if (dom._justId) {
+    let id = dom._justId;
+    let component = parent.componentPool[id];
+
+    if (component.name === vDom.component) {
+      component.dom = dom;
+      component.render();
+    } else {
+      delete parent.componentPool[id];
+      component = new parent.components[vDom.component]();
+      component.dom = dom;
+      component.render();
+    }
+  } else {
+    let component = new parent.components[vDom.component]();
+    component.dom = dom;
+    component.render();
+  }
+}
+
+function clearDomProps(dom) {
+  if (!dom._justProps) return;
+
+  Object.keys(dom._justProps).forEach(prop => {
+    dom[prop] = null;
+  });
 }
 
 function sameTypeAndTag(dom, vDom) {
@@ -162,9 +201,12 @@ function sameTypeAndTag(dom, vDom) {
 }
 
 function prepareVDom(vDom, className) {
-  if (!vDom.attrs) vDom.attrs = {};
   if (!vDom.props) vDom.props = {};
-  if (vDom.attrs.class) delete vDom.attrs.class;
-  if (!vDom.props.className) vDom.props.className = className;
-  else vDom.props.className = className + ' ' + vDom.props.className;
+
+  if (!vDom.component) {
+    if (!vDom.attrs) vDom.attrs = {};
+    if (vDom.attrs.class) delete vDom.attrs.class;
+    if (!vDom.props.className) vDom.props.className = className;
+    else vDom.props.className = className + ' ' + vDom.props.className;
+  }
 }

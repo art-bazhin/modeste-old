@@ -1,15 +1,16 @@
 import { createDom, updateDom } from './dom';
 import { processStyle, updateState } from './utils';
 
-let idList = {};
+let scopeClasses = {};
 
 export default class Component {
-  constructor(name, opts, J) {
+  constructor(name, opts, scopeClass, id, J) {
     this.J = J ? J : this;
     this.name = name;
 
-    this.prefix = Component.generatePrefix(this.name);
-    if (opts.style) processStyle(opts.style(J), this.prefix);
+    this.id = id;
+    this.scopeClass = scopeClass;
+    if (opts.style) processStyle(opts.style(J), this.scopeClass);
 
     if (typeof opts.state === 'function') {
       this._state = opts.state();
@@ -31,17 +32,21 @@ export default class Component {
       });
     }
 
-    this.componentPool = [];
-
     if (this.created) this.created();
   }
 
-  registerComponent(name, component) {
+  registerComponent(name, opts) {
     if (!this.components) this.components = {};
 
     if (!this.components.name) {
+      let scopeClass = Component.generateScopeClass(name);
       this.components[name] = () => {
-        return new Component(name, component, this.J);
+        let id = this.generateComponentId();
+        let component = new Component(name, opts, scopeClass, id, this.J);
+
+        this.componentPool[id] = component;
+
+        return component;
       };
     }
   }
@@ -49,13 +54,16 @@ export default class Component {
   render() {
     let vDom = this._renderFunc();
 
+    // TODO error handling
+    if (typeof vDom !== 'object' || vDom.component) return;
+
     if (!this.dom) {
       this.dom = createDom(vDom, this);
     } else {
       updateDom(this.dom, vDom, this);
     }
 
-    this.dom._justComponent = this;
+    this.dom._justId = this.id;
   }
 
   set state(state) {
@@ -68,14 +76,25 @@ export default class Component {
     return this._state;
   }
 
-  static generatePrefix(name) {
+  generateComponentId() {
+    if (!this.componentPool) this.componentPool = {};
     let id;
 
     do {
       id = Component.generateId();
-    } while (idList[id]);
+    } while (this.componentPool[id]);
 
-    idList[id] = true;
+    return id;
+  }
+
+  static generateScopeClass(name) {
+    let id;
+
+    do {
+      id = Component.generateId();
+    } while (scopeClasses[id]);
+
+    scopeClasses[id] = true;
 
     return name + id;
   }
