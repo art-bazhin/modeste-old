@@ -10,7 +10,6 @@ export default class Component {
 
     this.id = id;
     this.scopeClass = scopeClass;
-    if (opts.style) processStyle(opts.style(J), this.scopeClass);
 
     if (typeof opts.state === 'function') {
       this._state = opts.state();
@@ -40,6 +39,7 @@ export default class Component {
 
     if (!this.components.name) {
       let scopeClass = Component.generateScopeClass(name);
+      if (opts.style) processStyle(opts.style(), scopeClass);
       this.components[name] = () => {
         let id = this.generateComponentId();
         let component = new Component(name, opts, scopeClass, id, this.J);

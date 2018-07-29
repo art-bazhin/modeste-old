@@ -57,8 +57,6 @@ export function updateDom(dom, vDom, parent) {
     let newDom = createDom(vDom, parent);
     dom.parentNode.replaceChild(newDom, dom);
 
-    clearDomProps(dom);
-
     if (parent.dom === dom) {
       parent.dom = newDom;
     }
@@ -146,7 +144,6 @@ export function updateDom(dom, vDom, parent) {
       while (dom.childNodes[vDom.children.length]) {
         let child = dom.childNodes[vDom.children.length];
         dom.removeChild(child);
-        clearDomProps(child);
       }
 
       break;
@@ -168,6 +165,7 @@ function updateComponentDom(dom, vDom, parent) {
       component.dom = dom;
       component.render();
     } else {
+      delete parent.componentPool[id].dom;
       delete parent.componentPool[id];
       component = new parent.components[vDom.component]();
       component.dom = dom;
@@ -178,14 +176,6 @@ function updateComponentDom(dom, vDom, parent) {
     component.dom = dom;
     component.render();
   }
-}
-
-function clearDomProps(dom) {
-  if (!dom._justProps) return;
-
-  Object.keys(dom._justProps).forEach(prop => {
-    dom[prop] = null;
-  });
 }
 
 function sameTypeAndTag(dom, vDom) {
