@@ -8,13 +8,13 @@ export function createDom(vDom, parent) {
       return document.createTextNode(vDom);
 
     case 'object':
+      prepareVDom(vDom, parent.scopeClass);
+
       if (vDom.component) {
-        let component = new parent.components[vDom.component]();
+        let component = new parent.components[vDom.component](vDom.props);
         component.render();
         return component.dom;
       }
-
-      prepareVDom(vDom, parent.scopeClass);
 
       let dom = document.createElement(vDom.tag);
 
@@ -161,18 +161,21 @@ function updateComponentDom(dom, vDom, parent) {
     let id = dom._justId;
     let component = parent.componentPool[id];
 
+    if (!vDom.props) vDom.props = {};
+
     if (component.name === vDom.component) {
       component.dom = dom;
+      component.props = vDom.props;
       component.render();
     } else {
       delete parent.componentPool[id].dom;
       delete parent.componentPool[id];
-      component = new parent.components[vDom.component]();
+      component = new parent.components[vDom.component](vDom.props);
       component.dom = dom;
       component.render();
     }
   } else {
-    let component = new parent.components[vDom.component]();
+    let component = new parent.components[vDom.component](vDom.props);
     component.dom = dom;
     component.render();
   }

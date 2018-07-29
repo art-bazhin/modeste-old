@@ -4,12 +4,12 @@ import { processStyle, updateState } from './utils';
 let scopeClasses = {};
 
 export default class Component {
-  constructor(name, opts, scopeClass, id, J) {
+  constructor(name, opts, scopeClass, id, J, props) {
     this.J = J ? J : this;
     this.name = name;
-
     this.id = id;
     this.scopeClass = scopeClass;
+    this.props = props;
 
     if (typeof opts.state === 'function') {
       this._state = opts.state();
@@ -40,9 +40,16 @@ export default class Component {
     if (!this.components.name) {
       let scopeClass = Component.generateScopeClass(name);
       if (opts.style) processStyle(opts.style(), scopeClass);
-      this.components[name] = () => {
+      this.components[name] = props => {
         let id = this.generateComponentId();
-        let component = new Component(name, opts, scopeClass, id, this.J);
+        let component = new Component(
+          name,
+          opts,
+          scopeClass,
+          id,
+          this.J,
+          props
+        );
 
         this.componentPool[id] = component;
 
