@@ -22,6 +22,7 @@ export function processStyle(_style, scopeClass) {
   let styleString = '';
   let regex = /:\$/gm;
   let repl = '.' + scopeClass;
+  let rootClass = '._' + scopeClass;
 
   if (style instanceof Array) {
     style.forEach(elem => {
@@ -42,11 +43,20 @@ export function processStyle(_style, scopeClass) {
   styleElement.textContent = styleString;
   document.head.appendChild(styleElement);
 
+  return styleElement;
+
   function processRule(rule) {
-    styleString += rule.selector.replace(regex, repl) + '{';
+    styleString +=
+      rule.selector.replace(regex, repl).replace('$root', rootClass) + '{';
+
     Object.keys(rule.props).forEach(prop => {
-      styleString += prop + ':' + rule.props[prop] + ';';
+      styleString += toKebabCase(prop) + ':' + rule.props[prop] + ';';
     });
+
     styleString += '}';
   }
+}
+
+export function toKebabCase(str) {
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
 }

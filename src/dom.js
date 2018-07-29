@@ -1,4 +1,4 @@
-export function createDom(vDom, parent) {
+export function createDom(vDom, parent, isComponentRoot) {
   if (!vDom) {
     return document.createComment('');
   }
@@ -8,7 +8,7 @@ export function createDom(vDom, parent) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent.scopeClass);
+      prepareVDom(vDom, parent.scopeClass, isComponentRoot);
 
       if (vDom.component) {
         let component = new parent.components[vDom.component](vDom.props);
@@ -43,7 +43,7 @@ export function createDom(vDom, parent) {
   }
 }
 
-export function updateDom(dom, vDom, parent) {
+export function updateDom(dom, vDom, parent, isComponentRoot) {
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
     return;
@@ -51,7 +51,7 @@ export function updateDom(dom, vDom, parent) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom._justId) {
-      delete parent.componentPool[dom._justId];
+      parent.removeComponent(dom._justId);
     }
 
     let newDom = createDom(vDom, parent);
@@ -66,7 +66,7 @@ export function updateDom(dom, vDom, parent) {
 
   switch (dom.nodeType) {
     case 1:
-      prepareVDom(vDom, parent.scopeClass);
+      prepareVDom(vDom, parent.scopeClass, isComponentRoot);
 
       // Process attrs
       let attrs = [];
@@ -168,8 +168,7 @@ function updateComponentDom(dom, vDom, parent) {
       component.props = vDom.props;
       component.render();
     } else {
-      delete parent.componentPool[id].dom;
-      delete parent.componentPool[id];
+      parent.removeComponent(id);
       component = new parent.components[vDom.component](vDom.props);
       component.dom = dom;
       component.render();
@@ -193,13 +192,19 @@ function sameTypeAndTag(dom, vDom) {
   return false;
 }
 
-function prepareVDom(vDom, className) {
+function prepareVDom(vDom, className, isComponentRoot) {
   if (!vDom.props) vDom.props = {};
 
   if (!vDom.component) {
     if (!vDom.attrs) vDom.attrs = {};
     if (vDom.attrs.class) delete vDom.attrs.class;
-    if (!vDom.props.className) vDom.props.className = className;
-    else vDom.props.className = className + ' ' + vDom.props.className;
+
+    if (isComponentRoot) {
+      if (!vDom.props.className) vDom.props.className = '_' + className;
+      else vDom.props.className = '_' + className + ' ' + vDom.props.className;
+    } else {
+      if (!vDom.props.className) vDom.props.className = className;
+      else vDom.props.className = className + ' ' + vDom.props.className;
+    }
   }
 }

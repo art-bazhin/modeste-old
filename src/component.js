@@ -2,6 +2,16 @@ import { createDom, updateDom } from './dom';
 import { processStyle, updateState } from './utils';
 
 let scopeClasses = {};
+let hooks = [
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed'
+];
 
 export default class Component {
   constructor(name, opts, scopeClass, id, J, props) {
@@ -9,7 +19,10 @@ export default class Component {
     this.name = name;
     this.id = id;
     this.scopeClass = scopeClass;
-    this.props = props;
+    this.props = props ? props : {};
+    this.styleNodes = {};
+    this.components = {};
+    this.componentPool = {};
 
     if (typeof opts.state === 'function') {
       this._state = opts.state();
@@ -35,11 +48,13 @@ export default class Component {
   }
 
   registerComponent(name, opts) {
-    if (!this.components) this.components = {};
-
-    if (!this.components.name) {
+    if (!this.components[name]) {
       let scopeClass = Component.generateScopeClass(name);
-      if (opts.style) processStyle(opts.style(), scopeClass);
+
+      if (opts.style) {
+        this.styleNodes[name] = processStyle(opts.style(), scopeClass);
+      }
+
       this.components[name] = props => {
         let id = this.generateComponentId();
         let component = new Component(
@@ -58,6 +73,25 @@ export default class Component {
     }
   }
 
+  removeComponent(id) {
+    if (this.componentPool[id]) {
+      let component = this.componentPool[id];
+
+      delete component.dom;
+
+      Object.keys(component.styleNodes).forEach(name => {
+        let node = component.styleNodes[name];
+        node.parentNode.removeChild(node);
+      });
+
+      Object.keys(component.componentPool).forEach(id => {
+        component.removeComponent(id);
+      });
+
+      delete this.componentPool[id];
+    }
+  }
+
   render() {
     let vDom = this._renderFunc();
 
@@ -65,9 +99,9 @@ export default class Component {
     if (typeof vDom !== 'object' || vDom.component) return;
 
     if (!this.dom) {
-      this.dom = createDom(vDom, this);
+      this.dom = createDom(vDom, this, true);
     } else {
-      updateDom(this.dom, vDom, this);
+      updateDom(this.dom, vDom, this, true);
     }
 
     this.dom._justId = this.id;
@@ -84,7 +118,6 @@ export default class Component {
   }
 
   generateComponentId() {
-    if (!this.componentPool) this.componentPool = {};
     let id;
 
     do {
@@ -92,6 +125,12 @@ export default class Component {
     } while (this.componentPool[id]);
 
     return id;
+  }
+
+  emit(event, ...args) {
+    if (this.props['on' + event]) {
+      this.props['on' + event](...args);
+    }
   }
 
   static generateScopeClass(name) {
