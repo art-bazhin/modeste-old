@@ -1,4 +1,4 @@
-import { getScopeRoot } from './utils';
+import { getScopeRoot, toKebabCase } from './utils';
 
 export function createDom(vDom, parent, isComponentRoot) {
   if (!vDom) {
@@ -199,6 +199,16 @@ function prepareVDom(vDom, scope, isComponentRoot) {
 
   if (!vDom.component) {
     if (!vDom.attrs) vDom.attrs = {};
+    else {
+      let kebabAttrs = {};
+
+      Object.keys(vDom.attrs).forEach(attr => {
+        kebabAttrs[toKebabCase(attr)] = vDom.attrs[attr];
+      });
+
+      vDom.attrs = kebabAttrs;
+    }
+
     if (vDom.attrs.class) delete vDom.attrs.class;
 
     let className = isComponentRoot ? getScopeRoot(scope) : scope;
