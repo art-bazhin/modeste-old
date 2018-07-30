@@ -64,3 +64,16 @@ export function toKebabCase(str) {
 export function getScopeRoot(scope) {
   return '_' + scope;
 }
+
+export function generateId(maxValue, store, middleware) {
+  let id;
+
+  do {
+    id = (Math.random() * maxValue).toFixed(0);
+    if (middleware) id = middleware(id);
+  } while (store[id]);
+
+  store[id] = true;
+
+  return id;
+}

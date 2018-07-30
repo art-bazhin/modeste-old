@@ -1,5 +1,5 @@
 import { createDom, updateDom } from './dom';
-import { processStyle, updateState } from './utils';
+import { processStyle, updateState, generateId } from './utils';
 
 let scopes = {};
 let hooks = [
@@ -64,10 +64,12 @@ export default class Component {
   registerComponent(name, manifest) {
     if (!this.factories[name]) {
       let scope = Component.generateScope(name);
+
       processStyle(manifest.style(), scope);
 
       this.factories[name] = (props, parent) => {
-        let id = this.generateComponentId();
+        let id = generateId(10000, parent.components);
+
         let component = new Component(
           {
             name,
@@ -131,35 +133,7 @@ export default class Component {
     return this._state;
   }
 
-  generateComponentId() {
-    let id;
-
-    do {
-      id = Component.generateId();
-    } while (this.components[id]);
-
-    return id;
-  }
-
-  emit(event, ...args) {
-    if (this.props['on' + event]) {
-      this.props['on' + event](...args);
-    }
-  }
-
   static generateScope(name) {
-    let id;
-
-    do {
-      id = Component.generateId();
-    } while (scopes[id]);
-
-    scopes[id] = true;
-
-    return name + id;
-  }
-
-  static generateId() {
-    return (Math.random() * 10000).toFixed(0);
+    return generateId(10000, scopes, id => name + id);
   }
 }
