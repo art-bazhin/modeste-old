@@ -1,5 +1,6 @@
 import { createDom, updateDom } from './dom';
 import { processStyle, updateState, generateId } from './utils';
+import JustError from './error';
 
 let scopes = {};
 let hooks = [
@@ -107,8 +108,9 @@ export default class Component {
   render() {
     let vDom = this._renderFunc();
 
-    // TODO error handling
-    if (typeof vDom !== 'object' || vDom.component) return;
+    if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
+      throw new JustError(`${this.name}: Component root must be a tag`);
+    }
 
     if (!this.dom) {
       this.emitHook('willMount');

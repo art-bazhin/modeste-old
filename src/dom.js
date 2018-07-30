@@ -1,4 +1,5 @@
 import { getScopeRoot, toKebabCase } from './utils';
+import JustError from './error';
 
 export function createDom(vDom, parent, isComponentRoot) {
   if (!vDom) {
@@ -38,14 +39,18 @@ export function createDom(vDom, parent, isComponentRoot) {
         }
       });
 
-      if (!(vDom.children instanceof Array)) vDom.children = [];
-      vDom.children.forEach(child => dom.appendChild(createDom(child, parent)));
+      vDom.children.forEach(child => {
+        testVDom(child, parent);
+        dom.appendChild(createDom(child, parent));
+      });
 
       return dom;
   }
 }
 
 export function updateDom(dom, vDom, parent, isComponentRoot) {
+  prepareVDom(vDom, parent.scope, isComponentRoot);
+
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
     return;
@@ -68,8 +73,6 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
   switch (dom.nodeType) {
     case 1:
-      prepareVDom(vDom, parent.scope, isComponentRoot);
-
       // Process attrs
       let attrs = [];
 
@@ -136,6 +139,8 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
       if (!(vDom.children instanceof Array)) vDom.children = [];
 
       vDom.children.forEach((child, index) => {
+        testVDom(child, parent);
+
         if (!dom.childNodes[index]) {
           dom.appendChild(createDom(child, parent));
         } else {
@@ -195,6 +200,7 @@ function sameTypeAndTag(dom, vDom) {
 }
 
 function prepareVDom(vDom, scope, isComponentRoot) {
+  if (!vDom.children) vDom.children = [];
   if (!vDom.props) vDom.props = {};
 
   if (!vDom.component) {
@@ -215,5 +221,21 @@ function prepareVDom(vDom, scope, isComponentRoot) {
 
     if (!vDom.props.className) vDom.props.className = className;
     else vDom.props.className = className + ' ' + vDom.props.className;
+  }
+}
+
+function testVDom(vDom, parent) {
+  if (typeof vDom !== 'string' && !vDom.tag && !vDom.component) {
+    throw new JustError(
+      `${
+        parent.name
+      }: VDOM node must be a string or an object with "tag" or "component" property`
+    );
+  }
+
+  if (vDom.children && !(vDom.children instanceof Array)) {
+    throw new JustError(
+      `${parent.name}: VDOM node "children" property must be an Array`
+    );
   }
 }
