@@ -9,12 +9,15 @@ let hooks = [
   'mounted',
   'willUpdate',
   'updated',
-  'willDestroy',
-  'destroyed'
+  'willRemove',
+  'removed'
 ];
 
 export default class Component {
   constructor(opts, J) {
+    this.createHooks(opts.manifest);
+    this.emitHook('willCreate');
+
     if (!opts.manifest.factories) opts.manifest.factories = {};
     this.factories = opts.manifest.factories;
 
@@ -45,7 +48,17 @@ export default class Component {
       });
     }
 
-    if (this.created) this.created();
+    this.emitHook('created');
+  }
+
+  emitHook(hook) {
+    if (this[hook]) this[hook]();
+  }
+
+  createHooks(manifest) {
+    hooks.forEach(hook => {
+      if (manifest[hook]) this[hook] = manifest[hook].bind(this);
+    });
   }
 
   registerComponent(name, manifest) {
@@ -77,12 +90,14 @@ export default class Component {
     if (this.components[id]) {
       let component = this.components[id];
 
+      component.emitHook('willRemove');
       delete component.dom;
 
       Object.keys(component.components).forEach(id => {
         component.removeComponent(id);
       });
 
+      component.emitHook('removed');
       delete this.components[id];
     }
   }
@@ -94,9 +109,13 @@ export default class Component {
     if (typeof vDom !== 'object' || vDom.component) return;
 
     if (!this.dom) {
+      this.emitHook('willMount');
       this.dom = createDom(vDom, this, true);
+      this.emitHook('mounted');
     } else {
+      this.emitHook('willUpdate');
       updateDom(this.dom, vDom, this, true);
+      this.emitHook('updated');
     }
 
     this.dom._justId = this.id;
