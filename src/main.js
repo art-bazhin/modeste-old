@@ -1,16 +1,22 @@
 import Component from './component';
 import { processStyle } from './utils';
+import { ROOT_NAME } from './constants';
 
-let scopeClass = Component.generateScopeClass('justRoot');
+let scope = Component.generateScope(ROOT_NAME);
 
 export default class Just extends Component {
-  constructor(opts) {
-    super('justRoot', opts, scopeClass, 'root');
+  constructor(manifest) {
+    super({
+      name: ROOT_NAME,
+      id: ROOT_NAME,
+      manifest,
+      scope
+    });
 
-    if (opts.style) processStyle(opts.style(), scopeClass);
+    if (manifest.style) processStyle(manifest.style(), scope);
 
-    this.wrap = document.querySelector(opts.selector);
-    this.globals = opts.globals;
+    this.wrap = document.querySelector(manifest.selector);
+    this.globals = manifest.globals;
   }
 
   render() {

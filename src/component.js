@@ -1,72 +1,72 @@
 import { createDom, updateDom } from './dom';
 import { processStyle, updateState } from './utils';
 
-let scopeClasses = {};
+let scopes = {};
 let hooks = [
-  'beforeCreate',
+  'willCreate',
   'created',
-  'beforeMount',
+  'willMount',
   'mounted',
-  'beforeUpdate',
+  'willUpdate',
   'updated',
-  'beforeDestroy',
+  'willDestroy',
   'destroyed'
 ];
 
 export default class Component {
-  constructor(name, opts, scopeClass, id, J, props) {
-    this.J = J ? J : this;
-    this.name = name;
-    this.id = id;
-    this.scopeClass = scopeClass;
-    this.props = props ? props : {};
-    this.styleNodes = {};
-    this.components = {};
-    this.componentPool = {};
+  constructor(opts, J) {
+    if (!opts.manifest.factories) opts.manifest.factories = {};
+    this.factories = opts.manifest.factories;
 
-    if (typeof opts.state === 'function') {
-      this._state = opts.state();
+    this.J = J ? J : this;
+    this.name = opts.name;
+    this.id = opts.id;
+    this.scope = opts.scope;
+    this.props = opts.props ? opts.props : {};
+    this.components = {};
+
+    if (typeof opts.manifest.state === 'function') {
+      this._state = opts.manifest.state();
     } else {
-      this._state = opts.state;
+      this._state = opts.manifest.state;
     }
 
-    this._renderFunc = opts.render.bind(this);
+    this._renderFunc = opts.manifest.render.bind(this);
 
-    if (opts.components) {
-      Object.keys(opts.components).forEach(name => {
-        this.registerComponent(name, opts.components[name]);
+    if (opts.manifest.components) {
+      Object.keys(opts.manifest.components).forEach(name => {
+        this.registerComponent(name, opts.manifest.components[name]);
       });
     }
 
-    if (opts.methods) {
-      Object.keys(opts.methods).forEach(method => {
-        this[method] = opts.methods[method].bind(this);
+    if (opts.manifest.methods) {
+      Object.keys(opts.manifest.methods).forEach(method => {
+        this[method] = opts.manifest.methods[method].bind(this);
       });
     }
 
     if (this.created) this.created();
   }
 
-  registerComponent(name, opts) {
-    if (!this.components[name]) {
-      let scopeClass = Component.generateScopeClass(name);
+  registerComponent(name, manifest) {
+    if (!this.factories[name]) {
+      let scope = Component.generateScope(name);
+      processStyle(manifest.style(), scope);
 
-      if (opts.style) {
-        this.styleNodes[name] = processStyle(opts.style(), scopeClass);
-      }
-
-      this.components[name] = props => {
+      this.factories[name] = (props, parent) => {
         let id = this.generateComponentId();
         let component = new Component(
-          name,
-          opts,
-          scopeClass,
-          id,
-          this.J,
-          props
+          {
+            name,
+            manifest,
+            scope,
+            id,
+            props
+          },
+          parent.J
         );
 
-        this.componentPool[id] = component;
+        parent.components[id] = component;
 
         return component;
       };
@@ -74,21 +74,16 @@ export default class Component {
   }
 
   removeComponent(id) {
-    if (this.componentPool[id]) {
-      let component = this.componentPool[id];
+    if (this.components[id]) {
+      let component = this.components[id];
 
       delete component.dom;
 
-      Object.keys(component.styleNodes).forEach(name => {
-        let node = component.styleNodes[name];
-        node.parentNode.removeChild(node);
-      });
-
-      Object.keys(component.componentPool).forEach(id => {
+      Object.keys(component.components).forEach(id => {
         component.removeComponent(id);
       });
 
-      delete this.componentPool[id];
+      delete this.components[id];
     }
   }
 
@@ -122,7 +117,7 @@ export default class Component {
 
     do {
       id = Component.generateId();
-    } while (this.componentPool[id]);
+    } while (this.components[id]);
 
     return id;
   }
@@ -133,14 +128,14 @@ export default class Component {
     }
   }
 
-  static generateScopeClass(name) {
+  static generateScope(name) {
     let id;
 
     do {
       id = Component.generateId();
-    } while (scopeClasses[id]);
+    } while (scopes[id]);
 
-    scopeClasses[id] = true;
+    scopes[id] = true;
 
     return name + id;
   }

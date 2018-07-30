@@ -1,3 +1,5 @@
+import { getScopeRoot } from './utils';
+
 export function createDom(vDom, parent, isComponentRoot) {
   if (!vDom) {
     return document.createComment('');
@@ -8,10 +10,10 @@ export function createDom(vDom, parent, isComponentRoot) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent.scopeClass, isComponentRoot);
+      prepareVDom(vDom, parent.scope, isComponentRoot);
 
       if (vDom.component) {
-        let component = new parent.components[vDom.component](vDom.props);
+        let component = parent.factories[vDom.component](vDom.props, parent);
         component.render();
         return component.dom;
       }
@@ -66,7 +68,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
   switch (dom.nodeType) {
     case 1:
-      prepareVDom(vDom, parent.scopeClass, isComponentRoot);
+      prepareVDom(vDom, parent.scope, isComponentRoot);
 
       // Process attrs
       let attrs = [];
@@ -159,7 +161,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 function updateComponentDom(dom, vDom, parent) {
   if (dom._justId) {
     let id = dom._justId;
-    let component = parent.componentPool[id];
+    let component = parent.components[id];
 
     if (!vDom.props) vDom.props = {};
 
@@ -169,12 +171,12 @@ function updateComponentDom(dom, vDom, parent) {
       component.render();
     } else {
       parent.removeComponent(id);
-      component = new parent.components[vDom.component](vDom.props);
+      component = parent.factories[vDom.component](vDom.props, parent);
       component.dom = dom;
       component.render();
     }
   } else {
-    let component = new parent.components[vDom.component](vDom.props);
+    let component = parent.factories[vDom.component](vDom.props, parent);
     component.dom = dom;
     component.render();
   }
@@ -192,19 +194,16 @@ function sameTypeAndTag(dom, vDom) {
   return false;
 }
 
-function prepareVDom(vDom, className, isComponentRoot) {
+function prepareVDom(vDom, scope, isComponentRoot) {
   if (!vDom.props) vDom.props = {};
 
   if (!vDom.component) {
     if (!vDom.attrs) vDom.attrs = {};
     if (vDom.attrs.class) delete vDom.attrs.class;
 
-    if (isComponentRoot) {
-      if (!vDom.props.className) vDom.props.className = '_' + className;
-      else vDom.props.className = '_' + className + ' ' + vDom.props.className;
-    } else {
-      if (!vDom.props.className) vDom.props.className = className;
-      else vDom.props.className = className + ' ' + vDom.props.className;
-    }
+    let className = isComponentRoot ? getScopeRoot(scope) : scope;
+
+    if (!vDom.props.className) vDom.props.className = className;
+    else vDom.props.className = className + ' ' + vDom.props.className;
   }
 }

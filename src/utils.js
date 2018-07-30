@@ -16,13 +16,13 @@ export function updateState(original, update) {
   return stateChanged;
 }
 
-export function processStyle(_style, scopeClass) {
+export function processStyle(_style, scope) {
   let styleElement = document.createElement('style');
   let style = _style;
   let styleString = '';
   let regex = /:\$/gm;
-  let repl = '.' + scopeClass;
-  let rootClass = '._' + scopeClass;
+  let repl = '.' + scope;
+  let rootClass = '.' + getScopeRoot(scope);
 
   if (style instanceof Array) {
     style.forEach(elem => {
@@ -59,4 +59,8 @@ export function processStyle(_style, scopeClass) {
 
 export function toKebabCase(str) {
   return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+export function getScopeRoot(scope) {
+  return '_' + scope;
 }
