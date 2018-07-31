@@ -1,10 +1,11 @@
 {
   "name": "just",
-  "version": "0.0.1",
+  "version": "1.0.0-alpha",
   "main": "dist/just.cjs.js",
   "module": "dist/just.esm.js",
   "browser": "dist/just.umd.js",
   "devDependencies": {
+    "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.0",
     "eslint": "^5.2.0",
     "eslint-config-prettier": "^2.9.0",
@@ -13,7 +14,8 @@
     "rollup": "^0.46.0",
     "rollup-plugin-babel": "^2.7.1",
     "rollup-plugin-commonjs": "^8.0.2",
-    "rollup-plugin-node-resolve": "^3.0.0"
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-uglify": "^4.0.0"
   },
   "scripts": {
     "build": "rollup -c",
