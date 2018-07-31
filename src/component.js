@@ -26,11 +26,17 @@ export default class Component {
     this.name = opts.name;
     this.id = opts.id;
     this.scope = opts.scope;
-    this.props = opts.props ? opts.props : {};
     this.components = {};
-    this._state = opts.manifest.state();
+    this.props = opts.props ? opts.props : {};
+
+    if (!opts.manifest.state) {
+      this._state = {};
+    } else {
+      this._state = opts.manifest.state();
+    }
 
     this._renderFunc = opts.manifest.render.bind(this);
+    this.events = {};
 
     if (opts.manifest.components) {
       Object.keys(opts.manifest.components).forEach(name => {
@@ -45,6 +51,12 @@ export default class Component {
     }
 
     this.emitHook('created');
+  }
+
+  emit(event, ...args) {
+    if (this.props['on' + event]) {
+      this.props['on' + event](...args);
+    }
   }
 
   emitHook(hook) {
