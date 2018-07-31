@@ -235,6 +235,8 @@ function prepareVDom(vDom, scope, isComponentRoot) {
 }
 
 function testVDom(vDom, parent) {
+  if (!vDom) return;
+
   if (typeof vDom !== 'string' && !vDom.tag && !vDom.component) {
     throw new JustError(
       `${
