@@ -14,7 +14,8 @@ export function createDom(vDom, parent, isComponentRoot) {
       prepareVDom(vDom, parent.scope, isComponentRoot);
 
       if (vDom.component) {
-        let component = parent.factories[vDom.component](vDom.props, parent);
+        let component = createComponent(vDom.component, vDom.props, parent);
+
         component.render();
         return component.dom;
       }
@@ -176,15 +177,23 @@ function updateComponentDom(dom, vDom, parent) {
       component.render();
     } else {
       parent.removeComponent(id);
-      component = parent.factories[vDom.component](vDom.props, parent);
+      component = createComponent(vDom.component, vDom.props, parent);
       component.dom = dom;
       component.render();
     }
   } else {
-    let component = parent.factories[vDom.component](vDom.props, parent);
+    let component = createComponent(vDom.component, vDom.props, parent);
     component.dom = dom;
     component.render();
   }
+}
+
+function createComponent(name, props, parent) {
+  if (parent.factories[name]) {
+    return parent.factories[name](props, parent);
+  }
+
+  return parent.J.factories[name](props, parent);
 }
 
 function sameTypeAndTag(dom, vDom) {
