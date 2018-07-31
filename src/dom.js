@@ -200,6 +200,7 @@ function sameTypeAndTag(dom, vDom) {
 }
 
 function prepareVDom(vDom, scope, isComponentRoot) {
+  if (typeof vDom === 'string') return;
   if (!vDom.children) vDom.children = [];
   if (!vDom.props) vDom.props = {};
 
