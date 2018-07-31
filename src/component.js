@@ -35,8 +35,7 @@ export default class Component {
       this._state = opts.manifest.state();
     }
 
-    this._renderFunc = opts.manifest.render.bind(this);
-    this.events = {};
+    this._render = opts.manifest.render.bind(this);
 
     if (opts.manifest.components) {
       Object.keys(opts.manifest.components).forEach(name => {
@@ -113,7 +112,7 @@ export default class Component {
   }
 
   render() {
-    let vDom = this._renderFunc();
+    let vDom = this._render();
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
       throw new JustError(`${this.name}: Component root must be a tag`);
