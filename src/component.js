@@ -28,12 +28,7 @@ export default class Component {
     this.scope = opts.scope;
     this.props = opts.props ? opts.props : {};
     this.components = {};
-
-    if (typeof opts.manifest.state === 'function') {
-      this._state = opts.manifest.state();
-    } else {
-      this._state = opts.manifest.state;
-    }
+    this._state = opts.manifest.state();
 
     this._renderFunc = opts.manifest.render.bind(this);
 
