@@ -15,14 +15,13 @@ export default class Just extends Component {
 
     if (manifest.style) processStyle(manifest.style(), scope);
 
-    this.wrap = document.querySelector(manifest.selector);
-    this.globals = manifest.globals;
+    this._justInternal.wrap = document.querySelector(manifest.selector);
   }
 
   render() {
     super.render();
-    if (this.wrap.childNodes.length === 0) {
-      this.wrap.appendChild(this.dom);
+    if (this._justInternal.wrap.childNodes.length === 0) {
+      this._justInternal.wrap.appendChild(this._justInternal.dom);
     }
   }
 }

@@ -17,9 +17,9 @@ export default [
 			babel({
 				exclude: ['node_modules/**']
 			}),
-      uglify()
+      		uglify()
 		]
-	},
+	}, 
 
 	// CommonJS (for Node) and ES module (for bundlers) build.
 	// (We could have three entries in the configuration array

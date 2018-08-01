@@ -11,13 +11,13 @@ export function createDom(vDom, parent, isComponentRoot) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent.scope, isComponentRoot);
+      prepareVDom(vDom, parent._justInternal.scope, isComponentRoot);
 
       if (vDom.component) {
         let component = createComponent(vDom.component, vDom.props, parent);
 
         component.render();
-        return component.dom;
+        return component._justInternal.dom;
       }
 
       let dom = document.createElement(vDom.tag);
@@ -50,7 +50,7 @@ export function createDom(vDom, parent, isComponentRoot) {
 }
 
 export function updateDom(dom, vDom, parent, isComponentRoot) {
-  prepareVDom(vDom, parent.scope, isComponentRoot);
+  prepareVDom(vDom, parent._justInternal.scope, isComponentRoot);
 
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
@@ -59,14 +59,14 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom._justId) {
-      parent.removeComponent(dom._justId);
+      parent._justInternal.removeChild(dom._justId);
     }
 
     let newDom = createDom(vDom, parent);
     dom.parentNode.replaceChild(newDom, dom);
 
-    if (parent.dom === dom) {
-      parent.dom = newDom;
+    if (parent._justInternal.dom === dom) {
+      parent._justInternal.dom = newDom;
     }
 
     return;
@@ -167,33 +167,33 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 function updateComponentDom(dom, vDom, parent) {
   if (dom._justId) {
     let id = dom._justId;
-    let component = parent.components[id];
+    let component = parent._justInternal.children[id];
 
     if (!vDom.props) vDom.props = {};
 
     if (component.name === vDom.component) {
-      component.dom = dom;
+      component._justInternal.dom = dom;
       component.props = vDom.props;
       component.render();
     } else {
-      parent.removeComponent(id);
+      parent._justInternal.removeChild(id);
       component = createComponent(vDom.component, vDom.props, parent);
-      component.dom = dom;
+      component._justInternal.dom = dom;
       component.render();
     }
   } else {
     let component = createComponent(vDom.component, vDom.props, parent);
-    component.dom = dom;
+    component._justInternal.dom = dom;
     component.render();
   }
 }
 
 function createComponent(name, props, parent) {
-  if (parent.factories[name]) {
-    return parent.factories[name](props, parent);
+  if (parent._justInternal.factories[name]) {
+    return parent._justInternal.factories[name](props, parent);
   }
 
-  return parent.J.factories[name](props, parent);
+  return parent._justInternal.app.factories[name](props, parent);
 }
 
 function sameTypeAndTag(dom, vDom) {
@@ -240,14 +240,14 @@ function testVDom(vDom, parent) {
   if (typeof vDom !== 'string' && !vDom.tag && !vDom.component) {
     throw new JustError(
       `${
-        parent.name
+        parent._justInternal.name
       }: VDOM node must be a string or an object with "tag" or "component" property`
     );
   }
 
   if (vDom.children && !(vDom.children instanceof Array)) {
     throw new JustError(
-      `${parent.name}: VDOM node "children" property must be an Array`
+      `${parent._justInternal.name}: VDOM node "children" property must be an Array`
     );
   }
 }
