@@ -1,5 +1,5 @@
 import { createDom, updateDom } from './dom';
-import { processStyle, updateState, generateId } from './utils';
+import { processStyle, updateState, deepCompare, generateId } from './utils';
 import JustError from './error';
 
 let scopes = {};
@@ -19,6 +19,7 @@ export default class Component {
     this._justInternal.registerComponent = registerComponent.bind(this);
     this._justInternal.removeChild = removeChild.bind(this);
     this._justInternal.emitHook = emitHook.bind(this);
+    this._justInternal.setProps = setProps.bind(this);
 
     this.props = opts.props ? opts.props : {};
 
@@ -63,7 +64,7 @@ export default class Component {
       this._justInternal.emitHook('didUpdate');
     }
 
-    this._justInternal.dom._justId = this.id;
+    this._justInternal.dom._justId = this._justInternal.id;
   }
 
   set state(state) {
@@ -119,11 +120,18 @@ function removeChild(id) {
     component._justInternal.emitHook('willUnmount');
     delete component._justInternal.dom;
 
-    Object.keys(component.components).forEach(id => {
+    Object.keys(component._justInternal.children).forEach(id => {
       component.removeChild(id);
     });
 
     component._justInternal.emitHook('didUnmount');
     delete this._justInternal.children[id];
+  }
+}
+
+function setProps(props) {
+  if (!deepCompare(this.props, props)) {
+    this.props = props;
+    this.render();
   }
 }

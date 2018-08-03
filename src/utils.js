@@ -16,6 +16,30 @@ export function updateState(original, update) {
   return stateChanged;
 }
 
+export function deepCompare(a, b) {
+  if (typeof a === 'object' && typeof b === 'object') {
+    let aKeys = Object.keys(a);
+    let bKeys = Object.keys(b);
+
+    if (aKeys.length !== bKeys.length) return false;
+
+    for (let i = 0; i < aKeys.length; i++) {
+      let key = aKeys[i];
+      let index = bKeys.indexOf(key);
+
+      if (index < 0) return false;
+      else {
+        bKeys.splice(index, 1);
+        if (!deepCompare(a[key], b[key])) return false;
+      }
+    }
+
+    return bKeys.length === 0;
+  }
+
+  return a === b;
+}
+
 export function processStyle(style, scope) {
   if (!style) return;
 

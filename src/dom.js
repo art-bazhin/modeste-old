@@ -171,21 +171,16 @@ function updateComponentDom(dom, vDom, parent) {
 
     if (!vDom.props) vDom.props = {};
 
-    if (component.name === vDom.component) {
+    if (component._justInternal.name === vDom.component) {
       component._justInternal.dom = dom;
-      component.props = vDom.props;
-      component.render();
-    } else {
-      parent._justInternal.removeChild(id);
-      component = createComponent(vDom.component, vDom.props, parent);
-      component._justInternal.dom = dom;
-      component.render();
-    }
-  } else {
-    let component = createComponent(vDom.component, vDom.props, parent);
-    component._justInternal.dom = dom;
-    component.render();
+      component._justInternal.setProps(vDom.props);
+      return;
+    } else parent._justInternal.removeChild(id);
   }
+
+  let component = createComponent(vDom.component, vDom.props, parent);
+  component._justInternal.dom = dom;
+  component.render();
 }
 
 function createComponent(name, props, parent) {
