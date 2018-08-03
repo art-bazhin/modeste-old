@@ -247,7 +247,9 @@ function testVDom(vDom, parent) {
 
   if (vDom.children && !(vDom.children instanceof Array)) {
     throw new JustError(
-      `${parent._justInternal.name}: VDOM node "children" property must be an Array`
+      `${
+        parent._justInternal.name
+      }: VDOM node "children" property must be an Array`
     );
   }
 }

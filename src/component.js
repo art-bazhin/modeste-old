@@ -30,7 +30,10 @@ export default class Component {
 
     if (opts.manifest.components) {
       Object.keys(opts.manifest.components).forEach(name => {
-        this._justInternal.registerComponent(name, opts.manifest.components[name]);
+        this._justInternal.registerComponent(
+          name,
+          opts.manifest.components[name]
+        );
       });
     }
 
@@ -45,7 +48,9 @@ export default class Component {
     let vDom = this._justInternal.render();
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-      throw new JustError(`${this._justInternal.name}: Component root must be a tag`);
+      throw new JustError(
+        `${this._justInternal.name}: Component root must be a tag`
+      );
     }
 
     if (!this._justInternal.dom) {
