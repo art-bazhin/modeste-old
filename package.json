@@ -1,9 +1,8 @@
 {
   "name": "just",
   "version": "1.0.0-alpha",
-  "main": "dist/just.cjs.js",
-  "module": "dist/just.esm.js",
-  "browser": "dist/just.umd.js",
+  "main": "dist/just.browser.js",
+  "module": "dist/just.js",
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.0",
@@ -15,6 +14,7 @@
     "rollup-plugin-babel": "^2.7.1",
     "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-uglify": "^4.0.0"
   },
   "scripts": {
