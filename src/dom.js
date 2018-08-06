@@ -16,6 +16,8 @@ export function createDom(vDom, parent, isComponentRoot) {
       if (vDom.component) {
         let component = createComponent(vDom.component, vDom.props, parent);
 
+        if (vDom.ref) vDom.ref(component);
+
         component.render();
         return component._justInternal.dom;
       }
@@ -44,6 +46,8 @@ export function createDom(vDom, parent, isComponentRoot) {
         testVDom(child, parent);
         dom.appendChild(createDom(child, parent));
       });
+
+      if (vDom.ref) vDom.ref(dom);
 
       return dom;
   }
@@ -154,6 +158,9 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
         dom.removeChild(child);
       }
 
+      // Run ref function
+      if (vDom.ref) vDom.ref(dom);
+
       break;
 
     case 3:
@@ -174,12 +181,16 @@ function updateComponentDom(dom, vDom, parent) {
     if (component._justInternal.name === vDom.component) {
       component._justInternal.dom = dom;
       component._justInternal.setProps(vDom.props);
+      if (vDom.ref) vDom.ref(component);
       return;
     } else parent._justInternal.removeChild(id);
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);
   component._justInternal.dom = dom;
+
+  if (vDom.ref) vDom.ref(component);
+
   component.render();
 }
 
