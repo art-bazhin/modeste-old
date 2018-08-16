@@ -3,9 +3,7 @@ import { processStyle, shallowCompare, strictEqual, generateId } from './utils';
 import { INTERNAL_VAR_NAME as m } from './constants';
 import ModesteError from './error';
 
-let scopes = {};
-
-let hooks = [
+const HOOKS = [
   'willCreate',
   'didCreate',
   'willMount',
@@ -18,11 +16,14 @@ let hooks = [
   'shouldUpdateProps'
 ];
 
+let scopes = {};
+
 export default class Component {
   constructor(opts, app) {
     this[m] = {};
 
     if (!opts.manifest.factories) opts.manifest.factories = {};
+
     this[m].factories = opts.manifest.factories;
     this[m].app = app ? app : this;
     this[m].name = opts.name;
@@ -30,12 +31,13 @@ export default class Component {
     this[m].scope = opts.scope;
     this[m].children = {};
     this[m].render = opts.manifest.render.bind(this);
-    this[m].registerComponent = registerComponent.bind(this);
-    this[m].removeChild = removeChild.bind(this);
-    this[m].emitHook = emitHook.bind(this);
     this[m].setProps = setProps.bind(this);
     this[m].shouldUpdateData = shouldUpdateData.bind(this);
     this[m].shouldUpdateProps = shouldUpdateProps.bind(this);
+    this[m].emitHook = emitHook.bind(this);
+
+    registerHooks(opts.manifest, this);
+    this[m].emitHook('willCreate');
 
     this.props = opts.props ? opts.props : {};
 
@@ -60,7 +62,7 @@ export default class Component {
 
     if (opts.manifest.components) {
       Object.keys(opts.manifest.components).forEach(name => {
-        this[m].registerComponent(name, opts.manifest.components[name]);
+        registerComponent(name, opts.manifest.components[name], this);
       });
     }
 
@@ -69,26 +71,32 @@ export default class Component {
         this[method] = opts.manifest.methods[method].bind(this);
       });
     }
+
+    this[m].emitHook('didCreate');
   }
 
   render() {
+    let isMounting = !this[m].dom;
+
+    if (isMounting) this[m].emitHook('willMount');
+    else this[m].emitHook('willUpdate');
+
     let vDom = this[m].render();
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
       throw new ModesteError(`${this[m].name}: Component root must be a tag`);
     }
 
-    if (!this[m].dom) {
-      this[m].emitHook('willMount');
+    if (isMounting) {
       this[m].dom = createDom(vDom, this, true);
-      this[m].emitHook('didMount');
     } else {
-      this[m].emitHook('willUpdate');
       updateDom(this[m].dom, vDom, this, true);
-      this[m].emitHook('didUpdate');
     }
 
-    this[m].dom._modesteId = this[m].id;
+    this[m].dom[m].id = this[m].id;
+
+    if (isMounting) this[m].emitHook('didMount');
+    else this[m].emitHook('didUpdate');
   }
 
   static generateScope(name) {
@@ -96,17 +104,23 @@ export default class Component {
   }
 }
 
-function emitHook(hook) {
-  if (this[hook]) this[hook]();
+function registerHooks(manifest, component) {
+  HOOKS.forEach(hook => {
+    if (manifest[hook]) component[m][hook] = manifest[hook].bind(component);
+  });
 }
 
-function registerComponent(name, manifest) {
-  if (!this[m].factories[name]) {
+function emitHook(hook) {
+  if (this[m][hook]) this[m][hook]();
+}
+
+function registerComponent(name, manifest, parent) {
+  if (!parent[m].factories[name]) {
     let scope = Component.generateScope(name);
 
     processStyle(manifest.style(), scope);
 
-    this[m].factories[name] = (props, parent) => {
+    parent[m].factories[name] = (props, parent) => {
       let id = generateId(10000, parent[m].children);
 
       let component = new Component(
@@ -127,19 +141,19 @@ function registerComponent(name, manifest) {
   }
 }
 
-function removeChild(id) {
-  if (this[m].children[id]) {
+function removeChild(id, parent) {
+  if (parent[m].children[id]) {
     let component = this[m].children[id];
 
-    component[m].emitHook('willUnmount');
+    component[m].emitHook('willRemove');
     delete component[m].dom;
 
     Object.keys(component[m].children).forEach(id => {
-      component.removeChild(id);
+      removeChild(id, component);
     });
 
-    component[m].emitHook('didUnmount');
-    delete this[m].children[id];
+    component[m].emitHook('didRemove');
+    delete parent[m].children[id];
   }
 }
 
