@@ -63,7 +63,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
   }
 
   if (!sameTypeAndTag(dom, vDom)) {
-    if (dom[m].id) {
+    if (dom[m] && dom[m].id) {
       parent[m].removeChild(dom[m].id);
     }
 

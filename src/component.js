@@ -1,9 +1,22 @@
 import { createDom, updateDom } from './dom';
-import { processStyle, updateState, deepCompare, generateId } from './utils';
+import { processStyle, shallowCompare, strictEqual, generateId } from './utils';
 import { INTERNAL_VAR_NAME as m } from './constants';
-import modesteError from './error';
+import ModesteError from './error';
 
 let scopes = {};
+
+let hooks = [
+  'willCreate',
+  'didCreate',
+  'willMount',
+  'didMount',
+  'willUpdate',
+  'didUpdate',
+  'willRemove',
+  'didRemove',
+  'shouldUpdateData',
+  'shouldUpdateProps'
+];
 
 export default class Component {
   constructor(opts, app) {
@@ -21,13 +34,28 @@ export default class Component {
     this[m].removeChild = removeChild.bind(this);
     this[m].emitHook = emitHook.bind(this);
     this[m].setProps = setProps.bind(this);
+    this[m].shouldUpdateData = shouldUpdateData.bind(this);
+    this[m].shouldUpdateProps = shouldUpdateProps.bind(this);
 
     this.props = opts.props ? opts.props : {};
 
-    if (!opts.manifest.state) {
-      this[m].state = {};
-    } else {
-      this[m].state = opts.manifest.state();
+    if (opts.manifest.data) {
+      this[m].data = opts.manifest.data();
+
+      Object.keys(this[m].data).forEach(prop =>
+        Object.defineProperty(this, prop, {
+          enumerable: true,
+          get: function() {
+            return this[m].data[prop];
+          }.bind(this),
+          set: function(value) {
+            if (this[m].shouldUpdateData(this[m].data[prop], value)) {
+              this[m].data[prop] = value;
+              this.render();
+            }
+          }.bind(this)
+        })
+      );
     }
 
     if (opts.manifest.components) {
@@ -47,7 +75,7 @@ export default class Component {
     let vDom = this[m].render();
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-      throw new modesteError(`${this[m].name}: Component root must be a tag`);
+      throw new ModesteError(`${this[m].name}: Component root must be a tag`);
     }
 
     if (!this[m].dom) {
@@ -61,16 +89,6 @@ export default class Component {
     }
 
     this[m].dom._modesteId = this[m].id;
-  }
-
-  set state(state) {
-    if (updateState(this[m].state, state)) {
-      this.render();
-    }
-  }
-
-  get state() {
-    return this[m].state;
   }
 
   static generateScope(name) {
@@ -125,8 +143,16 @@ function removeChild(id) {
   }
 }
 
+function shouldUpdateData(oldValue, newValue) {
+  return !strictEqual(oldValue, newValue);
+}
+
+function shouldUpdateProps(props) {
+  return !shallowCompare(this.props, props);
+}
+
 function setProps(props) {
-  if (!deepCompare(this.props, props)) {
+  if (this[m].shouldUpdateProps(props)) {
     this.props = props;
     this.render();
   }

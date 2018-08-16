@@ -1,4 +1,4 @@
-export default class modesteError extends Error {
+export default class ModesteError extends Error {
   constructor(...args) {
     super(...args);
     this.name = 'MODESTE Error';

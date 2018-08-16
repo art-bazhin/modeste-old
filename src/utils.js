@@ -1,43 +1,22 @@
-export function updateState(original, update) {
-  let stateChanged = false;
-
-  Object.keys(update).forEach(prop => {
-    if (
-      typeof original[prop] === 'object' &&
-      typeof update[prop] === 'object'
-    ) {
-      stateChanged |= updateState(original[prop], update[prop]);
-    } else if (original[prop] !== update[prop]) {
-      original[prop] = update[prop];
-      stateChanged = true;
-    }
-  });
-
-  return stateChanged;
+export function strictEqual(a, b) {
+  return a === b;
 }
 
-export function deepCompare(a, b) {
-  if (typeof a === 'object' && typeof b === 'object') {
-    let aKeys = Object.keys(a);
-    let bKeys = Object.keys(b);
+export function shallowCompare(a, b) {
+  let aKeys = Object.keys(a);
+  let bKeys = Object.keys(b);
 
-    if (aKeys.length !== bKeys.length) return false;
+  if (aKeys.length !== bKeys.length) return false;
 
-    for (let i = 0; i < aKeys.length; i++) {
-      let key = aKeys[i];
-      let index = bKeys.indexOf(key);
+  for (let i = 0; i < aKeys.length; i++) {
+    let key = aKeys[i];
+    let index = bKeys.indexOf(key);
 
-      if (index < 0) return false;
-      else {
-        bKeys.splice(index, 1);
-        if (!deepCompare(a[key], b[key])) return false;
-      }
-    }
-
-    return bKeys.length === 0;
+    if (index < 0) return false;
+    if (!strictEqual(a[key], b[key])) return false;
   }
 
-  return a === b;
+  return true;
 }
 
 export function processStyle(style, scope) {
