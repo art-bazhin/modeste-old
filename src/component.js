@@ -18,105 +18,131 @@ const HOOKS = [
 
 let scopes = {};
 
-export default class Component {
-  constructor(opts, app) {
-    this[m] = {};
+export default function Component(opts, app) {
+  this[m] = {};
 
-    if (!opts.manifest.factories) opts.manifest.factories = {};
+  if (!opts.manifest.factories) opts.manifest.factories = {};
 
-    this[m].factories = opts.manifest.factories;
-    this[m].app = app ? app : this;
-    this[m].name = opts.name;
-    this[m].id = opts.id;
-    this[m].scope = opts.scope;
-    this[m].children = {};
-    this[m].render = opts.manifest.render.bind(this);
-    this[m].setProps = setProps.bind(this);
-    this[m].shouldUpdateData = shouldUpdateData.bind(this);
-    this[m].shouldUpdateProps = shouldUpdateProps.bind(this);
-    this[m].emitHook = emitHook.bind(this);
+  this[m].factories = opts.manifest.factories;
+  this[m].app = app ? app : this;
+  this[m].name = opts.name;
+  this[m].id = opts.id;
+  this[m].scope = opts.scope;
+  this[m].children = {};
 
-    registerHooks(opts.manifest, this);
-    this[m].emitHook('willCreate');
+  this[m].render = opts.manifest.render.bind(this);
+  this[m].shouldUpdateData = shouldUpdateData;
+  this[m].shouldUpdateProps = shouldUpdateProps;
 
-    this.props = opts.props ? opts.props : {};
+  this.render = function() {
+    render(this);
+  };
 
-    if (opts.manifest.data) {
-      this[m].data = opts.manifest.data();
+  registerHooks(this, opts.manifest);
+  emitHook(this, 'willCreate');
 
-      Object.keys(this[m].data).forEach(prop =>
-        Object.defineProperty(this, prop, {
-          enumerable: true,
-          get: function() {
-            return this[m].data[prop];
-          }.bind(this),
-          set: function(value) {
-            if (this[m].shouldUpdateData(this[m].data[prop], value)) {
-              this[m].data[prop] = value;
-              this.render();
-            }
-          }.bind(this)
-        })
-      );
-    }
+  this.props = opts.props ? opts.props : {};
 
-    if (opts.manifest.components) {
-      Object.keys(opts.manifest.components).forEach(name => {
-        registerComponent(name, opts.manifest.components[name], this);
-      });
-    }
+  if (opts.manifest.data) {
+    this[m].data = opts.manifest.data();
 
-    if (opts.manifest.methods) {
-      Object.keys(opts.manifest.methods).forEach(method => {
-        this[method] = opts.manifest.methods[method].bind(this);
-      });
-    }
-
-    this[m].emitHook('didCreate');
+    Object.keys(this[m].data).forEach(prop =>
+      Object.defineProperty(this, prop, {
+        enumerable: true,
+        get: function() {
+          return this[m].data[prop];
+        },
+        set: function(value) {
+          if (this[m].shouldUpdateData(this[m].data[prop], value)) {
+            this[m].data[prop] = value;
+            render(this);
+          }
+        }
+      })
+    );
   }
 
-  render() {
-    let isMounting = !this[m].dom;
-
-    if (isMounting) this[m].emitHook('willMount');
-    else this[m].emitHook('willUpdate');
-
-    let vDom = this[m].render();
-
-    if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-      throw new ModesteError(`${this[m].name}: Component root must be a tag`);
-    }
-
-    if (isMounting) {
-      this[m].dom = createDom(vDom, this, true);
-    } else {
-      updateDom(this[m].dom, vDom, this, true);
-    }
-
-    this[m].dom[m].id = this[m].id;
-
-    if (isMounting) this[m].emitHook('didMount');
-    else this[m].emitHook('didUpdate');
+  if (opts.manifest.components) {
+    Object.keys(opts.manifest.components).forEach(name => {
+      registerComponent(this, name, opts.manifest.components[name]);
+    });
   }
 
-  static generateScope(name) {
-    return generateId(10000, scopes, id => name + id);
+  if (opts.manifest.methods) {
+    Object.keys(opts.manifest.methods).forEach(method => {
+      this[method] = opts.manifest.methods[method].bind(this);
+    });
+  }
+
+  emitHook(this, 'didCreate');
+}
+
+export function generateScope(name) {
+  return generateId(10000, scopes, id => name + id);
+}
+
+export function render(component) {
+  let isMounting = !component[m].dom;
+
+  if (isMounting) emitHook(component, 'willMount');
+  else emitHook(component, 'willUpdate');
+
+  let vDom = component[m].render();
+
+  if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
+    throw new ModesteError(
+      `${component[m].name}: Component root must be a tag`
+    );
+  }
+
+  if (isMounting) {
+    component[m].dom = createDom(vDom, component, true);
+  } else {
+    updateDom(component[m].dom, vDom, component, true);
+  }
+
+  component[m].dom[m].id = component[m].id;
+
+  if (isMounting) emitHook(component, 'didMount');
+  else emitHook(component, 'didUpdate');
+}
+
+export function setProps(component, props) {
+  if (component[m].shouldUpdateProps(component.props, props)) {
+    component.props = props;
+    render(component);
   }
 }
 
-function registerHooks(manifest, component) {
+export function removeChild(parent, id) {
+  if (parent[m].children[id]) {
+    let component = this[m].children[id];
+
+    emitHook(component, 'willRemove');
+    delete component[m].dom;
+
+    Object.keys(component[m].children).forEach(id => {
+      removeChild(id, component);
+    });
+
+    emitHook(component, 'didRemove');
+    delete parent[m].children[id];
+  }
+}
+
+function registerHooks(component, manifest) {
   HOOKS.forEach(hook => {
     if (manifest[hook]) component[m][hook] = manifest[hook].bind(component);
   });
 }
 
-function emitHook(hook) {
-  if (this[m][hook]) this[m][hook]();
+function emitHook(component, hook) {
+  if (component[m][hook]) component[m][hook]();
 }
 
-function registerComponent(name, manifest, parent) {
+function registerComponent(parent, name, manifest) {
   if (!parent[m].factories[name]) {
-    let scope = Component.generateScope(name);
+    let scope = generateScope(name);
 
     processStyle(manifest.style(), scope);
 
@@ -141,33 +167,10 @@ function registerComponent(name, manifest, parent) {
   }
 }
 
-function removeChild(id, parent) {
-  if (parent[m].children[id]) {
-    let component = this[m].children[id];
-
-    component[m].emitHook('willRemove');
-    delete component[m].dom;
-
-    Object.keys(component[m].children).forEach(id => {
-      removeChild(id, component);
-    });
-
-    component[m].emitHook('didRemove');
-    delete parent[m].children[id];
-  }
-}
-
 function shouldUpdateData(oldValue, newValue) {
   return !strictEqual(oldValue, newValue);
 }
 
-function shouldUpdateProps(props) {
-  return !shallowCompare(this.props, props);
-}
-
-function setProps(props) {
-  if (this[m].shouldUpdateProps(props)) {
-    this.props = props;
-    this.render();
-  }
+function shouldUpdateProps(oldProps, newProps) {
+  !shallowCompare(oldProps, newProps);
 }

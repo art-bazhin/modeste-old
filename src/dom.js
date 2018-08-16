@@ -1,6 +1,8 @@
 import { getScopeRoot, toKebabCase } from './utils';
-import modesteError from './error';
 import { INTERNAL_VAR_NAME as m } from './constants';
+import { render, setProps, removeChild } from './component';
+
+import ModesteError from './error';
 
 export function createDom(vDom, parent, isComponentRoot) {
   if (!vDom) {
@@ -19,7 +21,7 @@ export function createDom(vDom, parent, isComponentRoot) {
 
         if (vDom.ref) vDom.ref(component);
 
-        component.render();
+        render(component);
         return component[m].dom;
       }
 
@@ -64,7 +66,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[m] && dom[m].id) {
-      parent[m].removeChild(dom[m].id);
+      removeChild(parent[m], dom[m].id);
     }
 
     let newDom = createDom(vDom, parent);
@@ -142,7 +144,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
       });
 
       // Process child nodes
-      if (!(vDom.children instanceof Array)) vDom.children = [];
+      if (!vDom.children) vDom.children = [];
 
       vDom.children.forEach((child, index) => {
         testVDom(child, parent);
@@ -181,7 +183,8 @@ function updateComponentDom(dom, vDom, parent) {
 
     if (component[m].name === vDom.component) {
       component[m].dom = dom;
-      component[m].setProps(vDom.props);
+      setProps(component, vDom.props);
+
       if (vDom.ref) vDom.ref(component);
       return;
     } else parent[m].removeChild(id);
@@ -192,7 +195,7 @@ function updateComponentDom(dom, vDom, parent) {
 
   if (vDom.ref) vDom.ref(component);
 
-  component.render();
+  render(component);
 }
 
 function createComponent(name, props, parent) {
@@ -248,7 +251,7 @@ function testVDom(vDom, parent) {
   if (!vDom) return;
 
   if (typeof vDom !== 'string' && !vDom.tag && !vDom.component) {
-    throw new modesteError(
+    throw new ModesteError(
       `${
         parent[m].name
       }: VDOM node must be a string or an object with "tag" or "component" property`
@@ -256,7 +259,7 @@ function testVDom(vDom, parent) {
   }
 
   if (vDom.children && !(vDom.children instanceof Array)) {
-    throw new modesteError(
+    throw new ModesteError(
       `${parent[m].name}: VDOM node "children" property must be an Array`
     );
   }
