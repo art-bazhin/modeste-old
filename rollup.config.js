@@ -10,7 +10,7 @@ export default [
     entry: 'src/main.js',
     dest: pkg.main,
     format: 'umd',
-    moduleName: 'Just',
+    moduleName: 'Modeste',
     sourceMap: true,
     plugins: [
       resolve(), // so Rollup can find `ms`

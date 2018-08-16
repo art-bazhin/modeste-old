@@ -1,8 +1,8 @@
-export default class JustError extends Error {
+export default class modesteError extends Error {
   constructor(...args) {
     super(...args);
-    this.name = 'Just Error';
-    this.message = '[JUST ERROR] ' + this.message;
-    Error.captureStackTrace(this, JustError);
+    this.name = 'MODESTE Error';
+    this.message = '[MODESTE ERROR] ' + this.message;
+    Error.captureStackTrace(this, modesteError);
   }
 }

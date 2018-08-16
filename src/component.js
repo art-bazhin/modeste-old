@@ -1,40 +1,38 @@
 import { createDom, updateDom } from './dom';
 import { processStyle, updateState, deepCompare, generateId } from './utils';
-import JustError from './error';
+import { INTERNAL_VAR_NAME as m } from './constants';
+import modesteError from './error';
 
 let scopes = {};
 
 export default class Component {
   constructor(opts, app) {
-    this._justInternal = {};
+    this[m] = {};
 
     if (!opts.manifest.factories) opts.manifest.factories = {};
-    this._justInternal.factories = opts.manifest.factories;
-    this._justInternal.app = app ? app : this;
-    this._justInternal.name = opts.name;
-    this._justInternal.id = opts.id;
-    this._justInternal.scope = opts.scope;
-    this._justInternal.children = {};
-    this._justInternal.render = opts.manifest.render.bind(this);
-    this._justInternal.registerComponent = registerComponent.bind(this);
-    this._justInternal.removeChild = removeChild.bind(this);
-    this._justInternal.emitHook = emitHook.bind(this);
-    this._justInternal.setProps = setProps.bind(this);
+    this[m].factories = opts.manifest.factories;
+    this[m].app = app ? app : this;
+    this[m].name = opts.name;
+    this[m].id = opts.id;
+    this[m].scope = opts.scope;
+    this[m].children = {};
+    this[m].render = opts.manifest.render.bind(this);
+    this[m].registerComponent = registerComponent.bind(this);
+    this[m].removeChild = removeChild.bind(this);
+    this[m].emitHook = emitHook.bind(this);
+    this[m].setProps = setProps.bind(this);
 
     this.props = opts.props ? opts.props : {};
 
     if (!opts.manifest.state) {
-      this._justInternal.state = {};
+      this[m].state = {};
     } else {
-      this._justInternal.state = opts.manifest.state();
+      this[m].state = opts.manifest.state();
     }
 
     if (opts.manifest.components) {
       Object.keys(opts.manifest.components).forEach(name => {
-        this._justInternal.registerComponent(
-          name,
-          opts.manifest.components[name]
-        );
+        this[m].registerComponent(name, opts.manifest.components[name]);
       });
     }
 
@@ -46,35 +44,33 @@ export default class Component {
   }
 
   render() {
-    let vDom = this._justInternal.render();
+    let vDom = this[m].render();
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-      throw new JustError(
-        `${this._justInternal.name}: Component root must be a tag`
-      );
+      throw new modesteError(`${this[m].name}: Component root must be a tag`);
     }
 
-    if (!this._justInternal.dom) {
-      this._justInternal.emitHook('willMount');
-      this._justInternal.dom = createDom(vDom, this, true);
-      this._justInternal.emitHook('didMount');
+    if (!this[m].dom) {
+      this[m].emitHook('willMount');
+      this[m].dom = createDom(vDom, this, true);
+      this[m].emitHook('didMount');
     } else {
-      this._justInternal.emitHook('willUpdate');
-      updateDom(this._justInternal.dom, vDom, this, true);
-      this._justInternal.emitHook('didUpdate');
+      this[m].emitHook('willUpdate');
+      updateDom(this[m].dom, vDom, this, true);
+      this[m].emitHook('didUpdate');
     }
 
-    this._justInternal.dom._justId = this._justInternal.id;
+    this[m].dom._modesteId = this[m].id;
   }
 
   set state(state) {
-    if (updateState(this._justInternal.state, state)) {
+    if (updateState(this[m].state, state)) {
       this.render();
     }
   }
 
   get state() {
-    return this._justInternal.state;
+    return this[m].state;
   }
 
   static generateScope(name) {
@@ -87,13 +83,13 @@ function emitHook(hook) {
 }
 
 function registerComponent(name, manifest) {
-  if (!this._justInternal.factories[name]) {
+  if (!this[m].factories[name]) {
     let scope = Component.generateScope(name);
 
     processStyle(manifest.style(), scope);
 
-    this._justInternal.factories[name] = (props, parent) => {
-      let id = generateId(10000, parent._justInternal.children);
+    this[m].factories[name] = (props, parent) => {
+      let id = generateId(10000, parent[m].children);
 
       let component = new Component(
         {
@@ -103,10 +99,10 @@ function registerComponent(name, manifest) {
           id,
           props
         },
-        parent._justInternal.app
+        parent[m].app
       );
 
-      parent._justInternal.children[id] = component;
+      parent[m].children[id] = component;
 
       return component;
     };
@@ -114,18 +110,18 @@ function registerComponent(name, manifest) {
 }
 
 function removeChild(id) {
-  if (this._justInternal.children[id]) {
-    let component = this._justInternal.children[id];
+  if (this[m].children[id]) {
+    let component = this[m].children[id];
 
-    component._justInternal.emitHook('willUnmount');
-    delete component._justInternal.dom;
+    component[m].emitHook('willUnmount');
+    delete component[m].dom;
 
-    Object.keys(component._justInternal.children).forEach(id => {
+    Object.keys(component[m].children).forEach(id => {
       component.removeChild(id);
     });
 
-    component._justInternal.emitHook('didUnmount');
-    delete this._justInternal.children[id];
+    component[m].emitHook('didUnmount');
+    delete this[m].children[id];
   }
 }
 

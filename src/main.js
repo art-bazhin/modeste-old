@@ -1,10 +1,10 @@
-import Component from './component';
 import { processStyle } from './utils';
-import { ROOT_NAME } from './constants';
+import { ROOT_NAME, INTERNAL_VAR_NAME as m } from './constants';
+import Component from './component';
 
 let scope = Component.generateScope(ROOT_NAME);
 
-export default class Just extends Component {
+export default class Modeste extends Component {
   constructor(manifest) {
     super({
       name: ROOT_NAME,
@@ -15,13 +15,13 @@ export default class Just extends Component {
 
     if (manifest.style) processStyle(manifest.style(), scope);
 
-    this._justInternal.wrap = document.querySelector(manifest.selector);
+    this[m].wrap = document.querySelector(manifest.selector);
   }
 
   render() {
     super.render();
-    if (this._justInternal.wrap.childNodes.length === 0) {
-      this._justInternal.wrap.appendChild(this._justInternal.dom);
+    if (this[m].wrap.childNodes.length === 0) {
+      this[m].wrap.appendChild(this[m].dom);
     }
   }
 }

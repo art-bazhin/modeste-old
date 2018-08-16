@@ -1,5 +1,6 @@
 import { getScopeRoot, toKebabCase } from './utils';
-import JustError from './error';
+import modesteError from './error';
+import { INTERNAL_VAR_NAME as m } from './constants';
 
 export function createDom(vDom, parent, isComponentRoot) {
   if (!vDom) {
@@ -11,7 +12,7 @@ export function createDom(vDom, parent, isComponentRoot) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent._justInternal.scope, isComponentRoot);
+      prepareVDom(vDom, parent[m].scope, isComponentRoot);
 
       if (vDom.component) {
         let component = createComponent(vDom.component, vDom.props, parent);
@@ -19,26 +20,26 @@ export function createDom(vDom, parent, isComponentRoot) {
         if (vDom.ref) vDom.ref(component);
 
         component.render();
-        return component._justInternal.dom;
+        return component[m].dom;
       }
 
       let dom = document.createElement(vDom.tag);
 
-      dom._justAttrs = {};
+      dom[m] = {};
+      dom[m].attrs = {};
+      dom[m].props = {};
 
       Object.keys(vDom.attrs).forEach(attr => {
         if (vDom.attrs[attr] !== null) {
           dom.setAttribute(attr, vDom.attrs[attr]);
-          dom._justAttrs[attr] = vDom.attrs[attr];
+          dom[m].attrs[attr] = vDom.attrs[attr];
         }
       });
-
-      dom._justProps = {};
 
       Object.keys(vDom.props).forEach(prop => {
         if (vDom.props[prop] !== null) {
           dom[prop] = vDom.props[prop];
-          dom._justProps[prop] = vDom.props[prop];
+          dom[m].props[prop] = vDom.props[prop];
         }
       });
 
@@ -54,7 +55,7 @@ export function createDom(vDom, parent, isComponentRoot) {
 }
 
 export function updateDom(dom, vDom, parent, isComponentRoot) {
-  prepareVDom(vDom, parent._justInternal.scope, isComponentRoot);
+  prepareVDom(vDom, parent[m].scope, isComponentRoot);
 
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
@@ -62,15 +63,15 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
   }
 
   if (!sameTypeAndTag(dom, vDom)) {
-    if (dom._justId) {
-      parent._justInternal.removeChild(dom._justId);
+    if (dom[m].id) {
+      parent[m].removeChild(dom[m].id);
     }
 
     let newDom = createDom(vDom, parent);
     dom.parentNode.replaceChild(newDom, dom);
 
-    if (parent._justInternal.dom === dom) {
-      parent._justInternal.dom = newDom;
+    if (parent[m].dom === dom) {
+      parent[m].dom = newDom;
     }
 
     return;
@@ -81,21 +82,21 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
       // Process attrs
       let attrs = [];
 
-      if (dom._justAttrs) {
-        Object.keys(dom._justAttrs).forEach(attr => {
+      if (dom[m].attrs) {
+        Object.keys(dom[m].attrs).forEach(attr => {
           attrs.push(attr);
         });
       }
 
-      if (!dom._justAttrs) dom._justAttrs = {};
+      if (!dom[m].attrs) dom[m].attrs = {};
 
       Object.keys(vDom.attrs).forEach(attr => {
         if (vDom.attrs[attr] === null) {
           dom.removeAttribute(attr);
-          delete dom._justAttrs[attr];
+          delete dom[m].attrs[attr];
         } else if (dom[attr] !== vDom.attrs[attr]) {
           dom.setAttribute(attr, vDom.attrs[attr]);
-          dom._justAttrs[attr] = vDom.attrs[attr];
+          dom[m].attrs[attr] = vDom.attrs[attr];
         }
 
         let index = attrs.indexOf(attr);
@@ -106,27 +107,27 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
       attrs.forEach(attr => {
         dom.removeAttribute(attr);
-        delete dom._justAttrs[attr];
+        delete dom[m].attrs[attr];
       });
 
       // Process props
       let props = [];
 
-      if (dom._justProps) {
-        Object.keys(dom._justProps).forEach(prop => {
+      if (dom[m].props) {
+        Object.keys(dom[m].props).forEach(prop => {
           props.push(prop);
         });
       }
 
-      if (!dom._justProps) dom._justProps = {};
+      if (!dom[m].props) dom[m].props = {};
 
       Object.keys(vDom.props).forEach(prop => {
         if (vDom.props[prop] === null) {
           dom[prop] = null;
-          delete dom._justProps[prop];
+          delete dom[m].props[prop];
         } else if (dom[prop] !== vDom.props[prop]) {
           dom[prop] = vDom.props[prop];
-          dom._justProps[prop] = vDom.props[prop];
+          dom[m].props[prop] = vDom.props[prop];
         }
 
         let index = props.indexOf(prop);
@@ -137,7 +138,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
       props.forEach(prop => {
         dom[prop] = null;
-        delete dom._justProps[prop];
+        delete dom[m].props[prop];
       });
 
       // Process child nodes
@@ -172,22 +173,22 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 }
 
 function updateComponentDom(dom, vDom, parent) {
-  if (dom._justId) {
-    let id = dom._justId;
-    let component = parent._justInternal.children[id];
+  if (dom[m].id) {
+    let id = dom[m].id;
+    let component = parent[m].children[id];
 
     if (!vDom.props) vDom.props = {};
 
-    if (component._justInternal.name === vDom.component) {
-      component._justInternal.dom = dom;
-      component._justInternal.setProps(vDom.props);
+    if (component[m].name === vDom.component) {
+      component[m].dom = dom;
+      component[m].setProps(vDom.props);
       if (vDom.ref) vDom.ref(component);
       return;
-    } else parent._justInternal.removeChild(id);
+    } else parent[m].removeChild(id);
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);
-  component._justInternal.dom = dom;
+  component[m].dom = dom;
 
   if (vDom.ref) vDom.ref(component);
 
@@ -195,11 +196,11 @@ function updateComponentDom(dom, vDom, parent) {
 }
 
 function createComponent(name, props, parent) {
-  if (parent._justInternal.factories[name]) {
-    return parent._justInternal.factories[name](props, parent);
+  if (parent[m].factories[name]) {
+    return parent[m].factories[name](props, parent);
   }
 
-  return parent._justInternal.app.factories[name](props, parent);
+  return parent[m].app.factories[name](props, parent);
 }
 
 function sameTypeAndTag(dom, vDom) {
@@ -231,12 +232,15 @@ function prepareVDom(vDom, scope, isComponentRoot) {
       vDom.attrs = kebabAttrs;
     }
 
-    if (vDom.attrs.class) delete vDom.attrs.class;
+    let scopeClass = isComponentRoot ? getScopeRoot(scope) : scope;
 
-    let className = isComponentRoot ? getScopeRoot(scope) : scope;
-
-    if (!vDom.props.className) vDom.props.className = className;
-    else vDom.props.className = className + ' ' + vDom.props.className;
+    if (vDom.props.className) {
+      delete vDom.attrs.class;
+      vDom.props.className = scopeClass + ' ' + vDom.props.className;
+    } else {
+      if (!vDom.attrs.class) vDom.props.className = scopeClass;
+      else vDom.attrs.class = scopeClass + ' ' + vDom.attrs.class;
+    }
   }
 }
 
@@ -244,18 +248,16 @@ function testVDom(vDom, parent) {
   if (!vDom) return;
 
   if (typeof vDom !== 'string' && !vDom.tag && !vDom.component) {
-    throw new JustError(
+    throw new modesteError(
       `${
-        parent._justInternal.name
+        parent[m].name
       }: VDOM node must be a string or an object with "tag" or "component" property`
     );
   }
 
   if (vDom.children && !(vDom.children instanceof Array)) {
-    throw new JustError(
-      `${
-        parent._justInternal.name
-      }: VDOM node "children" property must be an Array`
+    throw new modesteError(
+      `${parent[m].name}: VDOM node "children" property must be an Array`
     );
   }
 }

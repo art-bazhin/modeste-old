@@ -1,8 +1,8 @@
 {
-  "name": "just",
+  "name": "modeste",
   "version": "1.0.0-alpha",
-  "main": "dist/just.browser.js",
-  "module": "dist/just.js",
+  "main": "dist/modeste.browser.js",
+  "module": "dist/modeste.js",
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.0",
