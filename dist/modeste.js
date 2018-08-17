@@ -69,7 +69,7 @@ function generateId(maxValue, store, middleware) {
 const scopes = {};
 
 function generateScope(name) {
-  return generateId(1000000, scopes, id => name + id);
+  return generateId(1000000, scopes, id => `__${name}_${id}__`);
 }
 
 function addStyles(style, scope) {
