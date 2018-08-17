@@ -8,8 +8,8 @@ export default [
   // browser-friendly iife build
   {
     entry: 'src/main.js',
-    dest: pkg.main,
-    format: 'umd',
+    dest: pkg.browser,
+    format: 'iife',
     moduleName: 'Modeste',
     sourceMap: true,
     plugins: [

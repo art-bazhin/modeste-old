@@ -1,6 +1,6 @@
-import { processStyle } from './utils';
 import { ROOT_NAME, INTERNAL_VAR_NAME as m } from './constants';
 import { generateScope } from './component';
+import { addStyles } from './dom';
 import Component from './component';
 
 let scope = generateScope(ROOT_NAME);
@@ -13,7 +13,7 @@ export default function Modeste(manifest) {
     scope
   });
 
-  if (manifest.style) processStyle(manifest.style(), scope);
+  if (manifest.style) addStyles(manifest.style(), scope);
   this[m].wrap = document.querySelector(manifest.selector);
 }
 

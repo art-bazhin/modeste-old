@@ -1,3 +1,6 @@
+const ROOT_NAME = 'modesteRoot';
+const INTERNAL_VAR_NAME = '__modesteInternal';
+
 function strictEqual(a, b) {
   return a === b;
 }
@@ -19,32 +22,8 @@ function shallowCompare(a, b) {
   return true;
 }
 
-function processStyle(style, scope) {
-  if (!style) return;
-
-  let styleElement = document.createElement('style');
-
-  let regex = /:scoped/gm;
-  let repl = '.' + scope;
-
-  let rootRegex = /:component/gm;
-  let rootRepl = '.' + getScopeRoot(scope);
-
-  styleElement.textContent = style
-    .replace(regex, repl)
-    .replace(rootRegex, rootRepl);
-
-  document.head.appendChild(styleElement);
-
-  return styleElement;
-}
-
 function toKebabCase(str) {
   return str.replace(/([A-Z])/g, '-$1').toLowerCase();
-}
-
-function getScopeRoot(scope) {
-  return '_' + scope;
 }
 
 function generateId(maxValue, store, middleware) {
@@ -60,9 +39,6 @@ function generateId(maxValue, store, middleware) {
   return id;
 }
 
-const ROOT_NAME = 'modesteRoot';
-const INTERNAL_VAR_NAME = '__modesteInternal';
-
 class ModesteError extends Error {
   constructor(...args) {
     super(...args);
@@ -72,7 +48,22 @@ class ModesteError extends Error {
   }
 }
 
-function createDom(vDom, parent, isComponentRoot) {
+function addStyles(style, scope) {
+  if (!style) return;
+
+  let styleElement = document.createElement('style');
+
+  let regex = /:\$/gm;
+  let repl = '.' + scope;
+
+  styleElement.textContent = style.replace(regex, repl);
+
+  document.head.appendChild(styleElement);
+
+  return styleElement;
+}
+
+function createDom(vDom, parent) {
   if (!vDom) {
     return document.createComment('');
   }
@@ -82,7 +73,7 @@ function createDom(vDom, parent, isComponentRoot) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope, isComponentRoot);
+      prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
 
       if (vDom.component) {
         let component = createComponent(vDom.component, vDom.props, parent);
@@ -124,8 +115,8 @@ function createDom(vDom, parent, isComponentRoot) {
   }
 }
 
-function updateDom(dom, vDom, parent, isComponentRoot) {
-  prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope, isComponentRoot);
+function updateDom(dom, vDom, parent) {
+  prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
 
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
@@ -134,7 +125,7 @@ function updateDom(dom, vDom, parent, isComponentRoot) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
-      removeChild(parent[INTERNAL_VAR_NAME], dom[INTERNAL_VAR_NAME].id);
+      removeChild(parent, dom[INTERNAL_VAR_NAME].id);
     }
 
     let newDom = createDom(vDom, parent);
@@ -243,7 +234,7 @@ function updateDom(dom, vDom, parent, isComponentRoot) {
 }
 
 function updateComponentDom(dom, vDom, parent) {
-  if (dom[INTERNAL_VAR_NAME].id) {
+  if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
     let id = dom[INTERNAL_VAR_NAME].id;
     let component = parent[INTERNAL_VAR_NAME].children[id];
 
@@ -286,7 +277,7 @@ function sameTypeAndTag(dom, vDom) {
   return false;
 }
 
-function prepareVDom(vDom, scope, isComponentRoot) {
+function prepareVDom(vDom, scope) {
   if (!vDom || typeof vDom === 'string') return;
   if (!vDom.children) vDom.children = [];
   if (!vDom.props) vDom.props = {};
@@ -303,14 +294,12 @@ function prepareVDom(vDom, scope, isComponentRoot) {
       vDom.attrs = kebabAttrs;
     }
 
-    let scopeClass = isComponentRoot ? getScopeRoot(scope) : scope;
-
     if (vDom.props.className) {
       delete vDom.attrs.class;
-      vDom.props.className = scopeClass + ' ' + vDom.props.className;
+      vDom.props.className = scope + ' ' + vDom.props.className;
     } else {
-      if (!vDom.attrs.class) vDom.props.className = scopeClass;
-      else vDom.attrs.class = scopeClass + ' ' + vDom.attrs.class;
+      if (!vDom.attrs.class) vDom.props.className = scope;
+      else vDom.attrs.class = scope + ' ' + vDom.attrs.class;
     }
   }
 }
@@ -408,7 +397,7 @@ Component.prototype.render = function() {
 };
 
 function generateScope(name) {
-  return generateId(10000, scopes, id => name + id);
+  return generateId(1000000, scopes, id => name + id);
 }
 
 function render(component) {
@@ -446,7 +435,7 @@ function setProps(component, props) {
 
 function removeChild(parent, id) {
   if (parent[INTERNAL_VAR_NAME].children[id]) {
-    let component = this[INTERNAL_VAR_NAME].children[id];
+    let component = parent[INTERNAL_VAR_NAME].children[id];
 
     emitHook(component, 'willRemove');
     delete component[INTERNAL_VAR_NAME].dom;
@@ -474,10 +463,10 @@ function registerComponent(parent, name, manifest) {
   if (!parent[INTERNAL_VAR_NAME].factories[name]) {
     let scope = generateScope(name);
 
-    processStyle(manifest.style(), scope);
+    addStyles(manifest.style(), scope);
 
     parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
-      let id = generateId(10000, parent[INTERNAL_VAR_NAME].children);
+      let id = generateId(1000000, parent[INTERNAL_VAR_NAME].children);
 
       let component = new Component(
         {
@@ -515,7 +504,7 @@ function Modeste(manifest) {
     scope
   });
 
-  if (manifest.style) processStyle(manifest.style(), scope);
+  if (manifest.style) addStyles(manifest.style(), scope);
   this[INTERNAL_VAR_NAME].wrap = document.querySelector(manifest.selector);
 }
 

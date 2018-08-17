@@ -1,10 +1,25 @@
-import { getScopeRoot, toKebabCase } from './utils';
+import { toKebabCase } from './utils';
 import { INTERNAL_VAR_NAME as m } from './constants';
 import { render, setProps, removeChild } from './component';
 
 import ModesteError from './error';
 
-export function createDom(vDom, parent, isComponentRoot) {
+export function addStyles(style, scope) {
+  if (!style) return;
+
+  let styleElement = document.createElement('style');
+
+  let regex = /:\$/gm;
+  let repl = '.' + scope;
+
+  styleElement.textContent = style.replace(regex, repl);
+
+  document.head.appendChild(styleElement);
+
+  return styleElement;
+}
+
+export function createDom(vDom, parent) {
   if (!vDom) {
     return document.createComment('');
   }
@@ -14,7 +29,7 @@ export function createDom(vDom, parent, isComponentRoot) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent[m].scope, isComponentRoot);
+      prepareVDom(vDom, parent[m].scope);
 
       if (vDom.component) {
         let component = createComponent(vDom.component, vDom.props, parent);
@@ -56,8 +71,8 @@ export function createDom(vDom, parent, isComponentRoot) {
   }
 }
 
-export function updateDom(dom, vDom, parent, isComponentRoot) {
-  prepareVDom(vDom, parent[m].scope, isComponentRoot);
+export function updateDom(dom, vDom, parent) {
+  prepareVDom(vDom, parent[m].scope);
 
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
@@ -66,7 +81,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[m] && dom[m].id) {
-      removeChild(parent[m], dom[m].id);
+      removeChild(parent, dom[m].id);
     }
 
     let newDom = createDom(vDom, parent);
@@ -175,7 +190,7 @@ export function updateDom(dom, vDom, parent, isComponentRoot) {
 }
 
 function updateComponentDom(dom, vDom, parent) {
-  if (dom[m].id) {
+  if (dom[m] && dom[m].id) {
     let id = dom[m].id;
     let component = parent[m].children[id];
 
@@ -218,7 +233,7 @@ function sameTypeAndTag(dom, vDom) {
   return false;
 }
 
-function prepareVDom(vDom, scope, isComponentRoot) {
+function prepareVDom(vDom, scope) {
   if (!vDom || typeof vDom === 'string') return;
   if (!vDom.children) vDom.children = [];
   if (!vDom.props) vDom.props = {};
@@ -235,14 +250,12 @@ function prepareVDom(vDom, scope, isComponentRoot) {
       vDom.attrs = kebabAttrs;
     }
 
-    let scopeClass = isComponentRoot ? getScopeRoot(scope) : scope;
-
     if (vDom.props.className) {
       delete vDom.attrs.class;
-      vDom.props.className = scopeClass + ' ' + vDom.props.className;
+      vDom.props.className = scope + ' ' + vDom.props.className;
     } else {
-      if (!vDom.attrs.class) vDom.props.className = scopeClass;
-      else vDom.attrs.class = scopeClass + ' ' + vDom.attrs.class;
+      if (!vDom.attrs.class) vDom.props.className = scope;
+      else vDom.attrs.class = scope + ' ' + vDom.attrs.class;
     }
   }
 }

@@ -1,5 +1,5 @@
-import { createDom, updateDom } from './dom';
-import { processStyle, shallowCompare, strictEqual, generateId } from './utils';
+import { createDom, updateDom, addStyles } from './dom';
+import { shallowCompare, strictEqual, generateId } from './utils';
 import { INTERNAL_VAR_NAME as m } from './constants';
 import ModesteError from './error';
 
@@ -78,7 +78,7 @@ Component.prototype.render = function() {
 };
 
 export function generateScope(name) {
-  return generateId(10000, scopes, id => name + id);
+  return generateId(1000000, scopes, id => name + id);
 }
 
 export function render(component) {
@@ -116,7 +116,7 @@ export function setProps(component, props) {
 
 export function removeChild(parent, id) {
   if (parent[m].children[id]) {
-    let component = this[m].children[id];
+    let component = parent[m].children[id];
 
     emitHook(component, 'willRemove');
     delete component[m].dom;
@@ -144,10 +144,10 @@ function registerComponent(parent, name, manifest) {
   if (!parent[m].factories[name]) {
     let scope = generateScope(name);
 
-    processStyle(manifest.style(), scope);
+    addStyles(manifest.style(), scope);
 
     parent[m].factories[name] = (props, parent) => {
-      let id = generateId(10000, parent[m].children);
+      let id = generateId(1000000, parent[m].children);
 
       let component = new Component(
         {

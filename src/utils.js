@@ -19,32 +19,8 @@ export function shallowCompare(a, b) {
   return true;
 }
 
-export function processStyle(style, scope) {
-  if (!style) return;
-
-  let styleElement = document.createElement('style');
-
-  let regex = /:scoped/gm;
-  let repl = '.' + scope;
-
-  let rootRegex = /:component/gm;
-  let rootRepl = '.' + getScopeRoot(scope);
-
-  styleElement.textContent = style
-    .replace(regex, repl)
-    .replace(rootRegex, rootRepl);
-
-  document.head.appendChild(styleElement);
-
-  return styleElement;
-}
-
 export function toKebabCase(str) {
   return str.replace(/([A-Z])/g, '-$1').toLowerCase();
-}
-
-export function getScopeRoot(scope) {
-  return '_' + scope;
 }
 
 export function generateId(maxValue, store, middleware) {
