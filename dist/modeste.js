@@ -5,6 +5,10 @@ function strictEqual(a, b) {
   return a === b;
 }
 
+function shouldUpdateData(oldValue, newValue) {
+  return !strictEqual(oldValue, newValue);
+}
+
 function shallowCompare(a, b) {
   let aKeys = Object.keys(a);
   let bKeys = Object.keys(b);
@@ -22,8 +26,31 @@ function shallowCompare(a, b) {
   return true;
 }
 
-function toKebabCase(str) {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+function shouldUpdateProps(oldProps, newProps) {
+  !shallowCompare(oldProps, newProps);
+}
+
+const HOOKS = [
+  'willCreate',
+  'didCreate',
+  'willMount',
+  'didMount',
+  'willUpdate',
+  'didUpdate',
+  'willRemove',
+  'didRemove',
+  'shouldUpdateData',
+  'shouldUpdateProps'
+];
+
+function registerHooks(component, manifest) {
+  HOOKS.forEach(hook => {
+    if (manifest[hook]) component[INTERNAL_VAR_NAME][hook] = manifest[hook].bind(component);
+  });
+}
+
+function emitHook(component, hook) {
+  if (component[INTERNAL_VAR_NAME][hook]) component[INTERNAL_VAR_NAME][hook]();
 }
 
 function generateId(maxValue, store, middleware) {
@@ -39,13 +66,10 @@ function generateId(maxValue, store, middleware) {
   return id;
 }
 
-class ModesteError extends Error {
-  constructor(...args) {
-    super(...args);
-    this.name = 'MODESTE Error';
-    this.message = '[MODESTE ERROR] ' + this.message;
-    Error.captureStackTrace(this, modesteError);
-  }
+const scopes = {};
+
+function generateScope(name) {
+  return generateId(1000000, scopes, id => name + id);
 }
 
 function addStyles(style, scope) {
@@ -63,7 +87,117 @@ function addStyles(style, scope) {
   return styleElement;
 }
 
+function registerComponent(parent, name, manifest) {
+  if (!parent[INTERNAL_VAR_NAME].factories[name]) {
+    let scope = generateScope(name);
+
+    addStyles(manifest.style(), scope);
+
+    parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
+      let id = generateId(1000000, parent[INTERNAL_VAR_NAME].children);
+
+      let component = new Component(
+        {
+          name,
+          manifest,
+          scope,
+          id,
+          props
+        },
+        parent[INTERNAL_VAR_NAME].app
+      );
+
+      parent[INTERNAL_VAR_NAME].children[id] = component;
+
+      return component;
+    };
+  }
+}
+
+function tag(tag, opts, children) {
+  let props = {};
+  let attrs = {};
+  let node = { tag, props, attrs, children };
+
+  if (opts) {
+    Object.keys(opts).forEach(key => {
+      switch (key[0]) {
+        case '_':
+          attrs[key.substr(1)] = opts[key];
+          break;
+        case '$':
+          node[key.substr(1)] = opts[key];
+          break;
+        default:
+          props[key] = opts[key];
+      }
+    });
+  }
+
+  return node;
+}
+
+function component(component, opts) {
+  let props = {};
+  let node = { component, props };
+
+  if (opts) {
+    Object.keys(opts).forEach(key => {
+      switch (key[0]) {
+        case '$':
+          node[key.substr(1)] = opts[key];
+          break;
+        default:
+          props[key] = opts[key];
+      }
+    });
+  }
+
+  return node;
+}
+
+function toKebabCase(str) {
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+function prepareVDom(vDom, scope) {
+  if (!vDom || typeof vDom === 'string') return;
+  if (!vDom.children) vDom.children = [];
+  if (!vDom.props) vDom.props = {};
+
+  if (!vDom.component) {
+    if (!vDom.attrs) vDom.attrs = {};
+    else {
+      let kebabAttrs = {};
+
+      Object.keys(vDom.attrs).forEach(attr => {
+        kebabAttrs[toKebabCase(attr)] = vDom.attrs[attr];
+      });
+
+      vDom.attrs = kebabAttrs;
+    }
+
+    if (vDom.props.className) {
+      delete vDom.attrs.class;
+      vDom.props.className = scope + ' ' + vDom.props.className;
+    } else {
+      if (!vDom.attrs.class) vDom.props.className = scope;
+      else vDom.attrs.class = scope + ' ' + vDom.attrs.class;
+    }
+  }
+}
+
+function createComponent(name, props, parent) {
+  if (parent[INTERNAL_VAR_NAME].factories[name]) {
+    return parent[INTERNAL_VAR_NAME].factories[name](props, parent);
+  }
+
+  return parent[INTERNAL_VAR_NAME].app.factories[name](props, parent);
+}
+
 function createDom(vDom, parent) {
+  prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
+
   if (!vDom) {
     return document.createComment('');
   }
@@ -73,14 +207,12 @@ function createDom(vDom, parent) {
       return document.createTextNode(vDom);
 
     case 'object':
-      prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
-
       if (vDom.component) {
         let component = createComponent(vDom.component, vDom.props, parent);
 
         if (vDom.ref) vDom.ref(component);
 
-        render(component);
+        render$1(component);
         return component[INTERNAL_VAR_NAME].dom;
       }
 
@@ -105,13 +237,71 @@ function createDom(vDom, parent) {
       });
 
       vDom.children.forEach(child => {
-        testVDom(child, parent);
         dom.appendChild(createDom(child, parent));
       });
 
       if (vDom.ref) vDom.ref(dom);
 
       return dom;
+  }
+}
+
+function sameTypeAndTag(dom, vDom) {
+  if (!vDom) return dom.nodeType === 8;
+
+  if (typeof vDom === 'object' && dom.nodeType === 1) {
+    return vDom.tag.toUpperCase() === dom.tagName;
+  } else if (typeof vDom === 'string' && dom.nodeType === 3) {
+    return true;
+  }
+
+  return false;
+}
+
+function setProps(component, props) {
+  if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component.props, props)) {
+    component.props = props;
+    render(component);
+  }
+}
+
+function updateComponentDom(dom, vDom, parent) {
+  if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
+    let id = dom[INTERNAL_VAR_NAME].id;
+    let component = parent[INTERNAL_VAR_NAME].children[id];
+
+    if (!vDom.props) vDom.props = {};
+
+    if (component[INTERNAL_VAR_NAME].name === vDom.component) {
+      component[INTERNAL_VAR_NAME].dom = dom;
+      setProps(component, vDom.props);
+
+      if (vDom.ref) vDom.ref(component);
+      return;
+    } else parent[INTERNAL_VAR_NAME].removeChild(id);
+  }
+
+  let component = createComponent(vDom.component, vDom.props, parent);
+  component[INTERNAL_VAR_NAME].dom = dom;
+
+  if (vDom.ref) vDom.ref(component);
+
+  render$1(component);
+}
+
+function removeChild(parent, id) {
+  if (parent[INTERNAL_VAR_NAME].children[id]) {
+    let component = parent[INTERNAL_VAR_NAME].children[id];
+
+    emitHook(component, 'willRemove');
+    delete component[INTERNAL_VAR_NAME].dom;
+
+    Object.keys(component[INTERNAL_VAR_NAME].children).forEach(id => {
+      removeChild(id, component);
+    });
+
+    emitHook(component, 'didRemove');
+    delete parent[INTERNAL_VAR_NAME].children[id];
   }
 }
 
@@ -206,8 +396,6 @@ function updateDom(dom, vDom, parent) {
       if (!vDom.children) vDom.children = [];
 
       vDom.children.forEach((child, index) => {
-        testVDom(child, parent);
-
         if (!dom.childNodes[index]) {
           dom.appendChild(createDom(child, parent));
         } else {
@@ -233,151 +421,31 @@ function updateDom(dom, vDom, parent) {
   }
 }
 
-function updateComponentDom(dom, vDom, parent) {
-  if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
-    let id = dom[INTERNAL_VAR_NAME].id;
-    let component = parent[INTERNAL_VAR_NAME].children[id];
+function render$1(component$$1) {
+  let isMounting = !component$$1[INTERNAL_VAR_NAME].dom;
 
-    if (!vDom.props) vDom.props = {};
+  if (isMounting) emitHook(component$$1, 'willMount');
+  else emitHook(component$$1, 'willUpdate');
 
-    if (component[INTERNAL_VAR_NAME].name === vDom.component) {
-      component[INTERNAL_VAR_NAME].dom = dom;
-      setProps(component, vDom.props);
+  let vDom = component$$1[INTERNAL_VAR_NAME].render(tag, component);
 
-      if (vDom.ref) vDom.ref(component);
-      return;
-    } else parent[INTERNAL_VAR_NAME].removeChild(id);
-  }
-
-  let component = createComponent(vDom.component, vDom.props, parent);
-  component[INTERNAL_VAR_NAME].dom = dom;
-
-  if (vDom.ref) vDom.ref(component);
-
-  render(component);
-}
-
-function createComponent(name, props, parent) {
-  if (parent[INTERNAL_VAR_NAME].factories[name]) {
-    return parent[INTERNAL_VAR_NAME].factories[name](props, parent);
-  }
-
-  return parent[INTERNAL_VAR_NAME].app.factories[name](props, parent);
-}
-
-function sameTypeAndTag(dom, vDom) {
-  if (!vDom) return dom.nodeType === 8;
-
-  if (typeof vDom === 'object' && dom.nodeType === 1) {
-    return vDom.tag.toUpperCase() === dom.tagName;
-  } else if (typeof vDom === 'string' && dom.nodeType === 3) {
-    return true;
-  }
-
-  return false;
-}
-
-function prepareVDom(vDom, scope) {
-  if (!vDom || typeof vDom === 'string') return;
-  if (!vDom.children) vDom.children = [];
-  if (!vDom.props) vDom.props = {};
-
-  if (!vDom.component) {
-    if (!vDom.attrs) vDom.attrs = {};
-    else {
-      let kebabAttrs = {};
-
-      Object.keys(vDom.attrs).forEach(attr => {
-        kebabAttrs[toKebabCase(attr)] = vDom.attrs[attr];
-      });
-
-      vDom.attrs = kebabAttrs;
-    }
-
-    if (vDom.props.className) {
-      delete vDom.attrs.class;
-      vDom.props.className = scope + ' ' + vDom.props.className;
-    } else {
-      if (!vDom.attrs.class) vDom.props.className = scope;
-      else vDom.attrs.class = scope + ' ' + vDom.attrs.class;
-    }
-  }
-}
-
-function testVDom(vDom, parent) {
-  if (!vDom) return;
-
-  if (typeof vDom !== 'string' && !vDom.tag && !vDom.component) {
+  if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
     throw new ModesteError(
-      `${
-        parent[INTERNAL_VAR_NAME].name
-      }: VDOM node must be a string or an object with "tag" or "component" property`
+      `${component$$1[INTERNAL_VAR_NAME].name}: Component root must be a tag`
     );
   }
 
-  if (vDom.children && !(vDom.children instanceof Array)) {
-    throw new ModesteError(
-      `${parent[INTERNAL_VAR_NAME].name}: VDOM node "children" property must be an Array`
-    );
-  }
-}
-
-function tag(tag, opts, children) {
-  let props = {};
-  let attrs = {};
-  let node = { tag, props, attrs, children };
-
-  if (opts) {
-    Object.keys(opts).forEach(key => {
-      switch (key[0]) {
-        case '_':
-          attrs[key.substr(1)] = opts[key];
-          break;
-        case '$':
-          node[key.substr(1)] = opts[key];
-          break;
-        default:
-          props[key] = opts[key];
-      }
-    });
+  if (isMounting) {
+    component$$1[INTERNAL_VAR_NAME].dom = createDom(vDom, component$$1, true);
+  } else {
+    updateDom(component$$1[INTERNAL_VAR_NAME].dom, vDom, component$$1, true);
   }
 
-  return node;
+  component$$1[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component$$1[INTERNAL_VAR_NAME].id;
+
+  if (isMounting) emitHook(component$$1, 'didMount');
+  else emitHook(component$$1, 'didUpdate');
 }
-
-function component(component, opts) {
-  let props = {};
-  let node = { component, props };
-
-  if (opts) {
-    Object.keys(opts).forEach(key => {
-      switch (key[0]) {
-        case '$':
-          node[key.substr(1)] = opts[key];
-          break;
-        default:
-          props[key] = opts[key];
-      }
-    });
-  }
-
-  return node;
-}
-
-const HOOKS = [
-  'willCreate',
-  'didCreate',
-  'willMount',
-  'didMount',
-  'willUpdate',
-  'didUpdate',
-  'willRemove',
-  'didRemove',
-  'shouldUpdateData',
-  'shouldUpdateProps'
-];
-
-let scopes = {};
 
 function Component(opts, app) {
   this[INTERNAL_VAR_NAME] = {};
@@ -412,7 +480,7 @@ function Component(opts, app) {
         set: function(value) {
           if (this[INTERNAL_VAR_NAME].shouldUpdateData(this[INTERNAL_VAR_NAME].data[prop], value)) {
             this[INTERNAL_VAR_NAME].data[prop] = value;
-            render(this);
+            render$1(this);
           }
         }
       })
@@ -435,106 +503,8 @@ function Component(opts, app) {
 }
 
 Component.prototype.render = function() {
-  render(this);
+  render$1(this);
 };
-
-function generateScope(name) {
-  return generateId(1000000, scopes, id => name + id);
-}
-
-function render(component$$1) {
-  let isMounting = !component$$1[INTERNAL_VAR_NAME].dom;
-
-  if (isMounting) emitHook(component$$1, 'willMount');
-  else emitHook(component$$1, 'willUpdate');
-
-  let vDom = component$$1[INTERNAL_VAR_NAME].render(tag, component);
-
-  if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-    throw new ModesteError(
-      `${component$$1[INTERNAL_VAR_NAME].name}: Component root must be a tag`
-    );
-  }
-
-  if (isMounting) {
-    component$$1[INTERNAL_VAR_NAME].dom = createDom(vDom, component$$1, true);
-  } else {
-    updateDom(component$$1[INTERNAL_VAR_NAME].dom, vDom, component$$1, true);
-  }
-
-  component$$1[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component$$1[INTERNAL_VAR_NAME].id;
-
-  if (isMounting) emitHook(component$$1, 'didMount');
-  else emitHook(component$$1, 'didUpdate');
-}
-
-function setProps(component$$1, props) {
-  if (component$$1[INTERNAL_VAR_NAME].shouldUpdateProps(component$$1.props, props)) {
-    component$$1.props = props;
-    render(component$$1);
-  }
-}
-
-function removeChild(parent, id) {
-  if (parent[INTERNAL_VAR_NAME].children[id]) {
-    let component$$1 = parent[INTERNAL_VAR_NAME].children[id];
-
-    emitHook(component$$1, 'willRemove');
-    delete component$$1[INTERNAL_VAR_NAME].dom;
-
-    Object.keys(component$$1[INTERNAL_VAR_NAME].children).forEach(id => {
-      removeChild(id, component$$1);
-    });
-
-    emitHook(component$$1, 'didRemove');
-    delete parent[INTERNAL_VAR_NAME].children[id];
-  }
-}
-
-function registerHooks(component$$1, manifest) {
-  HOOKS.forEach(hook => {
-    if (manifest[hook]) component$$1[INTERNAL_VAR_NAME][hook] = manifest[hook].bind(component$$1);
-  });
-}
-
-function emitHook(component$$1, hook) {
-  if (component$$1[INTERNAL_VAR_NAME][hook]) component$$1[INTERNAL_VAR_NAME][hook]();
-}
-
-function registerComponent(parent, name, manifest) {
-  if (!parent[INTERNAL_VAR_NAME].factories[name]) {
-    let scope = generateScope(name);
-
-    addStyles(manifest.style(), scope);
-
-    parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
-      let id = generateId(1000000, parent[INTERNAL_VAR_NAME].children);
-
-      let component$$1 = new Component(
-        {
-          name,
-          manifest,
-          scope,
-          id,
-          props
-        },
-        parent[INTERNAL_VAR_NAME].app
-      );
-
-      parent[INTERNAL_VAR_NAME].children[id] = component$$1;
-
-      return component$$1;
-    };
-  }
-}
-
-function shouldUpdateData(oldValue, newValue) {
-  return !strictEqual(oldValue, newValue);
-}
-
-function shouldUpdateProps(oldProps, newProps) {
-  !shallowCompare(oldProps, newProps);
-}
 
 let scope = generateScope(ROOT_NAME);
 

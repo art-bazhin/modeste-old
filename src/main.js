@@ -1,7 +1,7 @@
+import Component from './component/Component';
+import generateScope from './component/generateScope';
+import addStyles from './dom/addStyles';
 import { ROOT_NAME, INTERNAL_VAR_NAME as m } from './constants';
-import { generateScope } from './component';
-import { addStyles } from './dom';
-import Component from './component';
 
 let scope = generateScope(ROOT_NAME);
 
