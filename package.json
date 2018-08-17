@@ -1,7 +1,7 @@
 {
   "name": "modeste",
-  "version": "1.0.0-alpha",
-  "main": "dist/modeste.browser.js",
+  "version": "0.0.0",
+  "main": "dist/modeste.js",
   "module": "dist/modeste.js",
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.22.0",

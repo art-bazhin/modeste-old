@@ -34,10 +34,6 @@ export default function Component(opts, app) {
   this[m].shouldUpdateData = shouldUpdateData;
   this[m].shouldUpdateProps = shouldUpdateProps;
 
-  this.render = function() {
-    render(this);
-  };
-
   registerHooks(this, opts.manifest);
   emitHook(this, 'willCreate');
 
@@ -76,6 +72,10 @@ export default function Component(opts, app) {
 
   emitHook(this, 'didCreate');
 }
+
+Component.prototype.render = function() {
+  render(this);
+};
 
 export function generateScope(name) {
   return generateId(10000, scopes, id => name + id);
