@@ -4,6 +4,10 @@
   "main": "dist/modeste.js",
   "browser": "dist/modeste.browser.js",
   "module": "dist/modeste.js",
+  "license": "MIT",
+  "repository": "git@github.com/art-bazhin/modeste.git",
+  "homepage": "https://github.com/art-bazhin/modeste",
+  "bugs": "https://github.com/art-bazhin/modeste/issues",
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.6.0",
