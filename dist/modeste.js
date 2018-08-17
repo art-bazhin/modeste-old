@@ -1,6 +1,10 @@
 const ROOT_NAME = 'modesteRoot';
 const INTERNAL_VAR_NAME = '__modesteInternal';
 
+const COMMENT_NODE = window.Node.COMMENT_NODE;
+const ELEMENT_NODE = window.Node.ELEMENT_NODE;
+const TEXT_NODE = window.Node.TEXT_NODE;
+
 function strictEqual(a, b) {
   return a === b;
 }
@@ -247,11 +251,11 @@ function createDom(vDom, parent) {
 }
 
 function sameTypeAndTag(dom, vDom) {
-  if (!vDom) return dom.nodeType === 8;
+  if (!vDom) return dom.nodeType === COMMENT_NODE;
 
-  if (typeof vDom === 'object' && dom.nodeType === 1) {
+  if (typeof vDom === 'object' && dom.nodeType === ELEMENT_NODE) {
     return vDom.tag.toUpperCase() === dom.tagName;
-  } else if (typeof vDom === 'string' && dom.nodeType === 3) {
+  } else if (typeof vDom === 'string' && dom.nodeType === TEXT_NODE) {
     return true;
   }
 
