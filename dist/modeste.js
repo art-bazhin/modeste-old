@@ -31,7 +31,7 @@ function shallowCompare(a, b) {
 }
 
 function shouldUpdateProps(oldProps, newProps) {
-  !shallowCompare(oldProps, newProps);
+  return !shallowCompare(oldProps, newProps);
 }
 
 const HOOKS = [
