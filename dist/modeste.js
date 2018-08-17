@@ -447,88 +447,89 @@ function render$1(component$$1) {
   else emitHook(component$$1, 'didUpdate');
 }
 
-function Component(opts, app) {
-  this[INTERNAL_VAR_NAME] = {};
+class Component {
+  constructor(opts, app) {
+    this[INTERNAL_VAR_NAME] = {};
 
-  if (!opts.manifest.factories) opts.manifest.factories = {};
+    if (!opts.manifest.factories) opts.manifest.factories = {};
 
-  this[INTERNAL_VAR_NAME].factories = opts.manifest.factories;
-  this[INTERNAL_VAR_NAME].app = app ? app : this;
-  this[INTERNAL_VAR_NAME].name = opts.name;
-  this[INTERNAL_VAR_NAME].id = opts.id;
-  this[INTERNAL_VAR_NAME].scope = opts.scope;
-  this[INTERNAL_VAR_NAME].children = {};
+    this[INTERNAL_VAR_NAME].factories = opts.manifest.factories;
+    this[INTERNAL_VAR_NAME].app = app ? app : this;
+    this[INTERNAL_VAR_NAME].name = opts.name;
+    this[INTERNAL_VAR_NAME].id = opts.id;
+    this[INTERNAL_VAR_NAME].scope = opts.scope;
+    this[INTERNAL_VAR_NAME].children = {};
 
-  this[INTERNAL_VAR_NAME].render = opts.manifest.render.bind(this);
-  this[INTERNAL_VAR_NAME].shouldUpdateData = shouldUpdateData;
-  this[INTERNAL_VAR_NAME].shouldUpdateProps = shouldUpdateProps;
+    this[INTERNAL_VAR_NAME].render = opts.manifest.render.bind(this);
+    this[INTERNAL_VAR_NAME].shouldUpdateData = shouldUpdateData;
+    this[INTERNAL_VAR_NAME].shouldUpdateProps = shouldUpdateProps;
 
-  registerHooks(this, opts.manifest);
-  emitHook(this, 'willCreate');
+    registerHooks(this, opts.manifest);
+    emitHook(this, 'willCreate');
 
-  this.props = opts.props ? opts.props : {};
+    this.props = opts.props ? opts.props : {};
 
-  if (opts.manifest.data) {
-    this[INTERNAL_VAR_NAME].data = opts.manifest.data();
+    if (opts.manifest.data) {
+      this[INTERNAL_VAR_NAME].data = opts.manifest.data();
 
-    Object.keys(this[INTERNAL_VAR_NAME].data).forEach(prop =>
-      Object.defineProperty(this, prop, {
-        enumerable: true,
-        get: function() {
-          return this[INTERNAL_VAR_NAME].data[prop];
-        },
-        set: function(value) {
-          if (this[INTERNAL_VAR_NAME].shouldUpdateData(this[INTERNAL_VAR_NAME].data[prop], value)) {
-            this[INTERNAL_VAR_NAME].data[prop] = value;
-            render$1(this);
+      Object.keys(this[INTERNAL_VAR_NAME].data).forEach(prop =>
+        Object.defineProperty(this, prop, {
+          enumerable: true,
+          get: function() {
+            return this[INTERNAL_VAR_NAME].data[prop];
+          },
+          set: function(value) {
+            if (this[INTERNAL_VAR_NAME].shouldUpdateData(this[INTERNAL_VAR_NAME].data[prop], value)) {
+              this[INTERNAL_VAR_NAME].data[prop] = value;
+              render$1(this);
+            }
           }
-        }
-      })
-    );
+        })
+      );
+    }
+
+    if (opts.manifest.components) {
+      Object.keys(opts.manifest.components).forEach(name => {
+        registerComponent(this, name, opts.manifest.components[name]);
+      });
+    }
+
+    if (opts.manifest.methods) {
+      Object.keys(opts.manifest.methods).forEach(method => {
+        this[method] = opts.manifest.methods[method].bind(this);
+      });
+    }
+
+    emitHook(this, 'didCreate');
   }
 
-  if (opts.manifest.components) {
-    Object.keys(opts.manifest.components).forEach(name => {
-      registerComponent(this, name, opts.manifest.components[name]);
-    });
+  render() {
+    render$1(this);
   }
-
-  if (opts.manifest.methods) {
-    Object.keys(opts.manifest.methods).forEach(method => {
-      this[method] = opts.manifest.methods[method].bind(this);
-    });
-  }
-
-  emitHook(this, 'didCreate');
 }
-
-Component.prototype.render = function() {
-  render$1(this);
-};
 
 let scope = generateScope(ROOT_NAME);
 
-function Modeste(manifest) {
-  Component.call(this, {
-    name: ROOT_NAME,
-    id: ROOT_NAME,
-    manifest,
-    scope
-  });
+class Modest extends Component {
+  constructor(manifest) {
+    super({
+      name: ROOT_NAME,
+      id: ROOT_NAME,
+      manifest,
+      scope
+    });
 
-  if (manifest.style) addStyles(manifest.style(), scope);
-  this[INTERNAL_VAR_NAME].wrap = document.querySelector(manifest.selector);
+    if (manifest.style) addStyles(manifest.style(), scope);
+    this[INTERNAL_VAR_NAME].wrap = document.querySelector(manifest.selector);
+  }
+
+  render() {
+    super.render();
+
+    if (this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
+      this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
+    }
+  }
 }
 
-Modeste.prototype = Object.create(Component.prototype);
-Modeste.prototype.constructor = Modeste;
-
-Modeste.prototype.render = function() {
-  Component.prototype.render.call(this);
-
-  if (this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
-    this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
-  }
-};
-
-export default Modeste;
+export default Modest;
