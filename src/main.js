@@ -5,7 +5,7 @@ import addStyles from './dom/addStyles';
 
 let scope = generateScope(ROOT_NAME);
 
-export default class Modest extends Component {
+export default class Modeste extends Component {
   constructor(manifest) {
     super({
       name: ROOT_NAME,

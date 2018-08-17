@@ -519,7 +519,7 @@ class Component {
 
 let scope = generateScope(ROOT_NAME);
 
-class Modest extends Component {
+class Modeste extends Component {
   constructor(manifest) {
     super({
       name: ROOT_NAME,
@@ -541,4 +541,4 @@ class Modest extends Component {
   }
 }
 
-export default Modest;
+export default Modeste;
