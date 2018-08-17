@@ -4,6 +4,7 @@ import t from '../render/tag';
 import c from '../render/component';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
+import ModesteError from '../utils/ModesteError';
 
 export default function render(component) {
   let isMounting = !component[m].dom;

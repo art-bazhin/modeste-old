@@ -421,6 +421,15 @@ function updateDom(dom, vDom, parent) {
   }
 }
 
+class ModesteError extends Error {
+  constructor(...args) {
+    super(...args);
+    this.name = 'MODESTE Error';
+    this.message = '[MODESTE ERROR] ' + this.message;
+    Error.captureStackTrace(this, modesteError);
+  }
+}
+
 function render$1(component$$1) {
   let isMounting = !component$$1[INTERNAL_VAR_NAME].dom;
 
