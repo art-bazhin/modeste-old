@@ -322,6 +322,48 @@ function testVDom(vDom, parent) {
   }
 }
 
+function tag(tag, opts, children) {
+  let props = {};
+  let attrs = {};
+  let node = { tag, props, attrs, children };
+
+  if (opts) {
+    Object.keys(opts).forEach(key => {
+      switch (key[0]) {
+        case '_':
+          attrs[key.substr(1)] = opts[key];
+          break;
+        case '$':
+          node[key.substr(1)] = opts[key];
+          break;
+        default:
+          props[key] = opts[key];
+      }
+    });
+  }
+
+  return node;
+}
+
+function component(component, opts) {
+  let props = {};
+  let node = { component, props };
+
+  if (opts) {
+    Object.keys(opts).forEach(key => {
+      switch (key[0]) {
+        case '$':
+          node[key.substr(1)] = opts[key];
+          break;
+        default:
+          props[key] = opts[key];
+      }
+    });
+  }
+
+  return node;
+}
+
 const HOOKS = [
   'willCreate',
   'didCreate',
@@ -400,63 +442,63 @@ function generateScope(name) {
   return generateId(1000000, scopes, id => name + id);
 }
 
-function render(component) {
-  let isMounting = !component[INTERNAL_VAR_NAME].dom;
+function render(component$$1) {
+  let isMounting = !component$$1[INTERNAL_VAR_NAME].dom;
 
-  if (isMounting) emitHook(component, 'willMount');
-  else emitHook(component, 'willUpdate');
+  if (isMounting) emitHook(component$$1, 'willMount');
+  else emitHook(component$$1, 'willUpdate');
 
-  let vDom = component[INTERNAL_VAR_NAME].render();
+  let vDom = component$$1[INTERNAL_VAR_NAME].render(tag, component);
 
   if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
     throw new ModesteError(
-      `${component[INTERNAL_VAR_NAME].name}: Component root must be a tag`
+      `${component$$1[INTERNAL_VAR_NAME].name}: Component root must be a tag`
     );
   }
 
   if (isMounting) {
-    component[INTERNAL_VAR_NAME].dom = createDom(vDom, component, true);
+    component$$1[INTERNAL_VAR_NAME].dom = createDom(vDom, component$$1, true);
   } else {
-    updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component, true);
+    updateDom(component$$1[INTERNAL_VAR_NAME].dom, vDom, component$$1, true);
   }
 
-  component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component[INTERNAL_VAR_NAME].id;
+  component$$1[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component$$1[INTERNAL_VAR_NAME].id;
 
-  if (isMounting) emitHook(component, 'didMount');
-  else emitHook(component, 'didUpdate');
+  if (isMounting) emitHook(component$$1, 'didMount');
+  else emitHook(component$$1, 'didUpdate');
 }
 
-function setProps(component, props) {
-  if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component.props, props)) {
-    component.props = props;
-    render(component);
+function setProps(component$$1, props) {
+  if (component$$1[INTERNAL_VAR_NAME].shouldUpdateProps(component$$1.props, props)) {
+    component$$1.props = props;
+    render(component$$1);
   }
 }
 
 function removeChild(parent, id) {
   if (parent[INTERNAL_VAR_NAME].children[id]) {
-    let component = parent[INTERNAL_VAR_NAME].children[id];
+    let component$$1 = parent[INTERNAL_VAR_NAME].children[id];
 
-    emitHook(component, 'willRemove');
-    delete component[INTERNAL_VAR_NAME].dom;
+    emitHook(component$$1, 'willRemove');
+    delete component$$1[INTERNAL_VAR_NAME].dom;
 
-    Object.keys(component[INTERNAL_VAR_NAME].children).forEach(id => {
-      removeChild(id, component);
+    Object.keys(component$$1[INTERNAL_VAR_NAME].children).forEach(id => {
+      removeChild(id, component$$1);
     });
 
-    emitHook(component, 'didRemove');
+    emitHook(component$$1, 'didRemove');
     delete parent[INTERNAL_VAR_NAME].children[id];
   }
 }
 
-function registerHooks(component, manifest) {
+function registerHooks(component$$1, manifest) {
   HOOKS.forEach(hook => {
-    if (manifest[hook]) component[INTERNAL_VAR_NAME][hook] = manifest[hook].bind(component);
+    if (manifest[hook]) component$$1[INTERNAL_VAR_NAME][hook] = manifest[hook].bind(component$$1);
   });
 }
 
-function emitHook(component, hook) {
-  if (component[INTERNAL_VAR_NAME][hook]) component[INTERNAL_VAR_NAME][hook]();
+function emitHook(component$$1, hook) {
+  if (component$$1[INTERNAL_VAR_NAME][hook]) component$$1[INTERNAL_VAR_NAME][hook]();
 }
 
 function registerComponent(parent, name, manifest) {
@@ -468,7 +510,7 @@ function registerComponent(parent, name, manifest) {
     parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
       let id = generateId(1000000, parent[INTERNAL_VAR_NAME].children);
 
-      let component = new Component(
+      let component$$1 = new Component(
         {
           name,
           manifest,
@@ -479,9 +521,9 @@ function registerComponent(parent, name, manifest) {
         parent[INTERNAL_VAR_NAME].app
       );
 
-      parent[INTERNAL_VAR_NAME].children[id] = component;
+      parent[INTERNAL_VAR_NAME].children[id] = component$$1;
 
-      return component;
+      return component$$1;
     };
   }
 }

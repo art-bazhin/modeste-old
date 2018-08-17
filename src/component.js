@@ -1,4 +1,5 @@
 import { createDom, updateDom, addStyles } from './dom';
+import { tag as t, component as c } from './vDom';
 import { shallowCompare, strictEqual, generateId } from './utils';
 import { INTERNAL_VAR_NAME as m } from './constants';
 import ModesteError from './error';
@@ -87,7 +88,7 @@ export function render(component) {
   if (isMounting) emitHook(component, 'willMount');
   else emitHook(component, 'willUpdate');
 
-  let vDom = component[m].render();
+  let vDom = component[m].render(t, c);
 
   if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
     throw new ModesteError(
