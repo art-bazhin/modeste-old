@@ -2,6 +2,7 @@ import { INTERNAL_VAR_NAME as m } from '../constants';
 import prepareVDom from './prepareVDom';
 import createComponent from '../component/createComponent';
 import render from '../component/render';
+import emitMount from '../component/emitMount';
 
 export default function createDom(vDom, parent) {
   prepareVDom(vDom, parent[m].scope);

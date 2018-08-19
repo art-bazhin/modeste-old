@@ -199,6 +199,14 @@ function createComponent(name, props, parent) {
   return parent[INTERNAL_VAR_NAME].app.factories[name](props, parent);
 }
 
+function emitMount$1(component) {
+  let children = component[INTERNAL_VAR_NAME].children;
+  Object.keys(children).forEach(key => emitMount$1(children[key]));
+
+  component[INTERNAL_VAR_NAME].mounted = true;
+  emitHook(component, 'didMount');
+}
+
 function createDom(vDom, parent) {
   prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
 
@@ -245,7 +253,7 @@ function createDom(vDom, parent) {
         dom.appendChild(childDom);
 
         if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
-          emitMount(parent[INTERNAL_VAR_NAME].children[id]);
+          emitMount$1(parent[INTERNAL_VAR_NAME].children[id]);
         }
       });
 
@@ -272,14 +280,6 @@ function setProps(component, props) {
     component.props = props;
     render(component);
   }
-}
-
-function emitMount$1(component) {
-  let children = component[INTERNAL_VAR_NAME].children;
-  Object.keys(children).forEach(key => emitMount$1(children[key]));
-
-  component[INTERNAL_VAR_NAME].mounted = true;
-  emitHook(component, 'didMount');
 }
 
 function updateComponentDom(dom, vDom, parent) {

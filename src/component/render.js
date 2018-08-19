@@ -5,7 +5,6 @@ import c from '../render/component';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
 import ModesteError from '../utils/ModesteError';
-import emitMount from './emitMount';
 
 export default function render(component) {
   const mounting = !component[m].dom;
