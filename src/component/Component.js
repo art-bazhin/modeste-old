@@ -7,13 +7,14 @@ import registerComponent from './registerComponent';
 import render from './render';
 
 export default class Component {
-  constructor(opts, app) {
+  constructor(opts, parent) {
     this[m] = {};
 
     if (!opts.manifest.factories) opts.manifest.factories = {};
 
     this[m].factories = opts.manifest.factories;
-    this[m].app = app ? app : this;
+    this[m].parent = parent;
+    this[m].app = parent ? parent[m].app : this;
     this[m].name = opts.name;
     this[m].id = opts.id;
     this[m].scope = opts.scope;

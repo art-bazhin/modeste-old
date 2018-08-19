@@ -1,4 +1,4 @@
-import { INTERNAL_VAR_NAME as m } from '../constants';
+import { INTERNAL_VAR_NAME as m, ELEMENT_NODE, TEXT_NODE } from '../constants';
 import prepareVDom from './prepareVDom';
 import sameTypeAndTag from './sameTypeAndTag';
 import updateComponentDom from './updateComponentDom';
@@ -29,7 +29,7 @@ export default function updateDom(dom, vDom, parent) {
   }
 
   switch (dom.nodeType) {
-    case 1:
+    case ELEMENT_NODE:
       // Process attrs
       let attrs = [];
 
@@ -113,7 +113,7 @@ export default function updateDom(dom, vDom, parent) {
 
       break;
 
-    case 3:
+    case TEXT_NODE:
       if (dom.nodeValue !== vDom) {
         dom.nodeValue = vDom;
       }

@@ -21,7 +21,7 @@ export default function registerComponent(parent, name, manifest) {
           id,
           props
         },
-        parent[m].app
+        parent
       );
 
       parent[m].children[id] = component;

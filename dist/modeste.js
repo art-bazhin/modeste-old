@@ -108,7 +108,7 @@ function registerComponent(parent, name, manifest) {
           id,
           props
         },
-        parent[INTERNAL_VAR_NAME].app
+        parent
       );
 
       parent[INTERNAL_VAR_NAME].children[id] = component;
@@ -461,13 +461,14 @@ function render$1(component$$1) {
 }
 
 class Component {
-  constructor(opts, app) {
+  constructor(opts, parent) {
     this[INTERNAL_VAR_NAME] = {};
 
     if (!opts.manifest.factories) opts.manifest.factories = {};
 
     this[INTERNAL_VAR_NAME].factories = opts.manifest.factories;
-    this[INTERNAL_VAR_NAME].app = app ? app : this;
+    this[INTERNAL_VAR_NAME].parent = parent;
+    this[INTERNAL_VAR_NAME].app = parent ? parent[INTERNAL_VAR_NAME].app : this;
     this[INTERNAL_VAR_NAME].name = opts.name;
     this[INTERNAL_VAR_NAME].id = opts.id;
     this[INTERNAL_VAR_NAME].scope = opts.scope;
