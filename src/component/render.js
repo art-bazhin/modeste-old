@@ -5,11 +5,12 @@ import c from '../render/component';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
 import ModesteError from '../utils/ModesteError';
+import emitMount from './emitMount';
 
 export default function render(component) {
-  let isMounting = !component[m].dom;
+  const mounting = !component[m].dom;
 
-  if (isMounting) emitHook(component, 'willMount');
+  if (mounting) emitHook(component, 'willMount');
   else emitHook(component, 'willUpdate');
 
   let vDom = component[m].render(t, c);
@@ -20,7 +21,7 @@ export default function render(component) {
     );
   }
 
-  if (isMounting) {
+  if (mounting) {
     component[m].dom = createDom(vDom, component, true);
   } else {
     updateDom(component[m].dom, vDom, component, true);
@@ -28,6 +29,5 @@ export default function render(component) {
 
   component[m].dom[m].id = component[m].id;
 
-  if (isMounting) emitHook(component, 'didMount');
-  else emitHook(component, 'didUpdate');
+  if (!mounting) emitHook(component, 'didUpdate');
 }

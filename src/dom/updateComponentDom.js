@@ -2,6 +2,7 @@ import { INTERNAL_VAR_NAME as m } from '../constants';
 import createComponent from '../component/createComponent';
 import setProps from '../component/setProps';
 import render from '../component/render';
+import emitMount from '../component/emitMount';
 
 export default function updateComponentDom(dom, vDom, parent) {
   if (dom[m] && dom[m].id) {
@@ -25,4 +26,6 @@ export default function updateComponentDom(dom, vDom, parent) {
   if (vDom.ref) vDom.ref(component);
 
   render(component);
+
+  if (parent[m].mounted) emitMount(component);
 }

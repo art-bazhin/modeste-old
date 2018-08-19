@@ -97,7 +97,12 @@ export default function updateDom(dom, vDom, parent) {
 
       vDom.children.forEach((child, index) => {
         if (!dom.childNodes[index]) {
-          dom.appendChild(createDom(child, parent));
+          let childDom = createDom(child, parent);
+          dom.appendChild(childDom);
+
+          if (parent[m].mounted && childDom[m] && childDom[m].id) {
+            emitMount(parent[m].children[id]);
+          }
         } else {
           updateDom(dom.childNodes[index], child, parent);
         }

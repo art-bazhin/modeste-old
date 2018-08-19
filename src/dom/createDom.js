@@ -45,7 +45,12 @@ export default function createDom(vDom, parent) {
       });
 
       vDom.children.forEach(child => {
-        dom.appendChild(createDom(child, parent));
+        let childDom = createDom(child, parent);
+        dom.appendChild(childDom);
+
+        if (parent[m].mounted && childDom[m] && childDom[m].id) {
+          emitMount(parent[m].children[id]);
+        }
       });
 
       if (vDom.ref) vDom.ref(dom);

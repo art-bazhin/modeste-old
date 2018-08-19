@@ -241,7 +241,12 @@ function createDom(vDom, parent) {
       });
 
       vDom.children.forEach(child => {
-        dom.appendChild(createDom(child, parent));
+        let childDom = createDom(child, parent);
+        dom.appendChild(childDom);
+
+        if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
+          emitMount(parent[INTERNAL_VAR_NAME].children[id]);
+        }
       });
 
       if (vDom.ref) vDom.ref(dom);
@@ -269,6 +274,14 @@ function setProps(component, props) {
   }
 }
 
+function emitMount$1(component) {
+  let children = component[INTERNAL_VAR_NAME].children;
+  Object.keys(children).forEach(key => emitMount$1(children[key]));
+
+  component[INTERNAL_VAR_NAME].mounted = true;
+  emitHook(component, 'didMount');
+}
+
 function updateComponentDom(dom, vDom, parent) {
   if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
     let id = dom[INTERNAL_VAR_NAME].id;
@@ -291,6 +304,8 @@ function updateComponentDom(dom, vDom, parent) {
   if (vDom.ref) vDom.ref(component);
 
   render$1(component);
+
+  if (parent[INTERNAL_VAR_NAME].mounted) emitMount$1(component);
 }
 
 function removeChild(parent, id) {
@@ -333,7 +348,7 @@ function updateDom(dom, vDom, parent) {
   }
 
   switch (dom.nodeType) {
-    case 1:
+    case ELEMENT_NODE:
       // Process attrs
       let attrs = [];
 
@@ -401,7 +416,12 @@ function updateDom(dom, vDom, parent) {
 
       vDom.children.forEach((child, index) => {
         if (!dom.childNodes[index]) {
-          dom.appendChild(createDom(child, parent));
+          let childDom = createDom(child, parent);
+          dom.appendChild(childDom);
+
+          if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
+            emitMount(parent[INTERNAL_VAR_NAME].children[id]);
+          }
         } else {
           updateDom(dom.childNodes[index], child, parent);
         }
@@ -417,7 +437,7 @@ function updateDom(dom, vDom, parent) {
 
       break;
 
-    case 3:
+    case TEXT_NODE:
       if (dom.nodeValue !== vDom) {
         dom.nodeValue = vDom;
       }
@@ -435,9 +455,9 @@ class ModesteError extends Error {
 }
 
 function render$1(component$$1) {
-  let isMounting = !component$$1[INTERNAL_VAR_NAME].dom;
+  const mounting = !component$$1[INTERNAL_VAR_NAME].dom;
 
-  if (isMounting) emitHook(component$$1, 'willMount');
+  if (mounting) emitHook(component$$1, 'willMount');
   else emitHook(component$$1, 'willUpdate');
 
   let vDom = component$$1[INTERNAL_VAR_NAME].render(tag, component);
@@ -448,7 +468,7 @@ function render$1(component$$1) {
     );
   }
 
-  if (isMounting) {
+  if (mounting) {
     component$$1[INTERNAL_VAR_NAME].dom = createDom(vDom, component$$1, true);
   } else {
     updateDom(component$$1[INTERNAL_VAR_NAME].dom, vDom, component$$1, true);
@@ -456,8 +476,7 @@ function render$1(component$$1) {
 
   component$$1[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component$$1[INTERNAL_VAR_NAME].id;
 
-  if (isMounting) emitHook(component$$1, 'didMount');
-  else emitHook(component$$1, 'didUpdate');
+  if (!mounting) emitHook(component$$1, 'didUpdate');
 }
 
 class Component {
@@ -542,6 +561,7 @@ class Modeste extends Component {
 
     if (this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
       this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
+      emitMount$1(this);
     }
   }
 }
