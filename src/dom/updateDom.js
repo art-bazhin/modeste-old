@@ -4,6 +4,7 @@ import sameTypeAndTag from './sameTypeAndTag';
 import updateComponentDom from './updateComponentDom';
 import createDom from './createDom';
 import removeChild from '../component/removeChild';
+import emitMount from '../component/emitMount';
 
 export default function updateDom(dom, vDom, parent) {
   prepareVDom(vDom, parent[m].scope);

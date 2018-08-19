@@ -199,9 +199,9 @@ function createComponent(name, props, parent) {
   return parent[INTERNAL_VAR_NAME].app.factories[name](props, parent);
 }
 
-function emitMount$1(component) {
+function emitMount(component) {
   let children = component[INTERNAL_VAR_NAME].children;
-  Object.keys(children).forEach(key => emitMount$1(children[key]));
+  Object.keys(children).forEach(key => emitMount(children[key]));
 
   component[INTERNAL_VAR_NAME].mounted = true;
   emitHook(component, 'didMount');
@@ -253,7 +253,7 @@ function createDom(vDom, parent) {
         dom.appendChild(childDom);
 
         if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
-          emitMount$1(parent[INTERNAL_VAR_NAME].children[id]);
+          emitMount(parent[INTERNAL_VAR_NAME].children[id]);
         }
       });
 
@@ -305,7 +305,7 @@ function updateComponentDom(dom, vDom, parent) {
 
   render$1(component);
 
-  if (parent[INTERNAL_VAR_NAME].mounted) emitMount$1(component);
+  if (parent[INTERNAL_VAR_NAME].mounted) emitMount(component);
 }
 
 function removeChild(parent, id) {
@@ -561,7 +561,7 @@ class Modeste extends Component {
 
     if (this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
       this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
-      emitMount$1(this);
+      emitMount(this);
     }
   }
 }
