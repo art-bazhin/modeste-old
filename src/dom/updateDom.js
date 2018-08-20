@@ -1,5 +1,5 @@
 import { INTERNAL_VAR_NAME as m, ELEMENT_NODE, TEXT_NODE } from '../constants';
-import prepareVDom from './prepareVDom';
+import addClass from '../vDom/addClass';
 import sameTypeAndTag from './sameTypeAndTag';
 import updateComponentDom from './updateComponentDom';
 import createDom from './createDom';
@@ -7,7 +7,7 @@ import removeChild from '../component/removeChild';
 import emitMount from '../component/emitMount';
 
 export default function updateDom(dom, vDom, parent) {
-  prepareVDom(vDom, parent[m].scope);
+  addClass(vDom, parent[m].scope);
 
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
@@ -46,7 +46,7 @@ export default function updateDom(dom, vDom, parent) {
         if (vDom.attrs[attr] === null) {
           dom.removeAttribute(attr);
           delete dom[m].attrs[attr];
-        } else if (dom[attr] !== vDom.attrs[attr]) {
+        } else if (dom[m].attrs[attr] !== vDom.attrs[attr]) {
           dom.setAttribute(attr, vDom.attrs[attr]);
           dom[m].attrs[attr] = vDom.attrs[attr];
         }
@@ -77,7 +77,7 @@ export default function updateDom(dom, vDom, parent) {
         if (vDom.props[prop] === null) {
           dom[prop] = null;
           delete dom[m].props[prop];
-        } else if (dom[prop] !== vDom.props[prop]) {
+        } else if (dom[m].props[prop] !== vDom.props[prop]) {
           dom[prop] = vDom.props[prop];
           dom[m].props[prop] = vDom.props[prop];
         }
@@ -102,7 +102,7 @@ export default function updateDom(dom, vDom, parent) {
           dom.appendChild(childDom);
 
           if (parent[m].mounted && childDom[m] && childDom[m].id) {
-            emitMount(parent[m].children[id]);
+            emitMount(parent[m].children[childDom[m].id]);
           }
         } else {
           updateDom(dom.childNodes[index], child, parent);

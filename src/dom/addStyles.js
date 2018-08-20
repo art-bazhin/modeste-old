@@ -3,10 +3,12 @@ export default function addStyles(style, scope) {
 
   let styleElement = document.createElement('style');
 
-  let regex = /:\$/gm;
-  let repl = '.' + scope;
+  if (scope) {
+    let regex = /:\$/gm;
+    let repl = '.' + scope;
 
-  styleElement.textContent = style.replace(regex, repl);
+    styleElement.textContent = style.replace(regex, repl);
+  }
 
   document.head.appendChild(styleElement);
 

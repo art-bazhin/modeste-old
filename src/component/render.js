@@ -1,7 +1,7 @@
 import { INTERNAL_VAR_NAME as m } from '../constants';
 import emitHook from './emitHook';
-import t from '../render/tag';
-import c from '../render/component';
+import t from '../vDom/createTagNode';
+import c from '../vDom/createComponentNode';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
 import ModesteError from '../utils/ModesteError';

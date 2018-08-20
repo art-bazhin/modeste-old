@@ -81,10 +81,12 @@ function addStyles(style, scope) {
 
   let styleElement = document.createElement('style');
 
-  let regex = /:\$/gm;
-  let repl = '.' + scope;
+  if (scope) {
+    let regex = /:\$/gm;
+    let repl = '.' + scope;
 
-  styleElement.textContent = style.replace(regex, repl);
+    styleElement.textContent = style.replace(regex, repl);
+  }
 
   document.head.appendChild(styleElement);
 
@@ -118,25 +120,36 @@ function registerComponent(parent, name, manifest) {
   }
 }
 
+function toKebabCase(str) {
+  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
 function tag(tag, opts, children) {
   let props = {};
   let attrs = {};
-  let node = { tag, props, attrs, children };
+
+  let node = { tag, props, attrs };
 
   if (opts) {
-    Object.keys(opts).forEach(key => {
-      switch (key[0]) {
-        case '_':
-          attrs[key.substr(1)] = opts[key];
-          break;
-        case '$':
-          node[key.substr(1)] = opts[key];
-          break;
-        default:
-          props[key] = opts[key];
-      }
-    });
+    if (opts instanceof Array) {
+      children = opts;
+    } else {
+      Object.keys(opts).forEach(key => {
+        switch (key[0]) {
+          case '_':
+            attrs[toKebabCase(key.substr(1))] = opts[key];
+            break;
+          case '$':
+            node[key.substr(1)] = opts[key];
+            break;
+          default:
+            props[key] = opts[key];
+        }
+      });
+    }
   }
+
+  node.children = children ? children : [];
 
   return node;
 }
@@ -160,34 +173,14 @@ function component(component, opts) {
   return node;
 }
 
-function toKebabCase(str) {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
-}
-
-function prepareVDom(vDom, scope) {
-  if (!vDom || typeof vDom === 'string') return;
-  if (!vDom.children) vDom.children = [];
-  if (!vDom.props) vDom.props = {};
-
+function addClass(vDom, className) {
+  if (!vDom || typeof vDom === 'string' || !className) return;
   if (!vDom.component) {
-    if (!vDom.attrs) vDom.attrs = {};
-    else {
-      let kebabAttrs = {};
+    if (!vDom.props.className) vDom.props.className = '';
+    if (!vDom.attrs.class) vDom.attrs.class = '';
 
-      Object.keys(vDom.attrs).forEach(attr => {
-        kebabAttrs[toKebabCase(attr)] = vDom.attrs[attr];
-      });
-
-      vDom.attrs = kebabAttrs;
-    }
-
-    if (vDom.props.className) {
-      delete vDom.attrs.class;
-      vDom.props.className = scope + ' ' + vDom.props.className;
-    } else {
-      if (!vDom.attrs.class) vDom.props.className = scope;
-      else vDom.attrs.class = scope + ' ' + vDom.attrs.class;
-    }
+    vDom.props.className = `${vDom.props.className} ${className}`.trim();
+    vDom.attrs.class = `${vDom.attrs.class} ${className}`.trim();
   }
 }
 
@@ -208,7 +201,7 @@ function emitMount(component) {
 }
 
 function createDom(vDom, parent) {
-  prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
+  addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
 
   if (!vDom) {
     return document.createComment('');
@@ -253,7 +246,7 @@ function createDom(vDom, parent) {
         dom.appendChild(childDom);
 
         if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
-          emitMount(parent[INTERNAL_VAR_NAME].children[id]);
+          emitMount(parent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
         }
       });
 
@@ -325,7 +318,7 @@ function removeChild(parent, id) {
 }
 
 function updateDom(dom, vDom, parent) {
-  prepareVDom(vDom, parent[INTERNAL_VAR_NAME].scope);
+  addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
 
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
@@ -364,7 +357,7 @@ function updateDom(dom, vDom, parent) {
         if (vDom.attrs[attr] === null) {
           dom.removeAttribute(attr);
           delete dom[INTERNAL_VAR_NAME].attrs[attr];
-        } else if (dom[attr] !== vDom.attrs[attr]) {
+        } else if (dom[INTERNAL_VAR_NAME].attrs[attr] !== vDom.attrs[attr]) {
           dom.setAttribute(attr, vDom.attrs[attr]);
           dom[INTERNAL_VAR_NAME].attrs[attr] = vDom.attrs[attr];
         }
@@ -395,7 +388,7 @@ function updateDom(dom, vDom, parent) {
         if (vDom.props[prop] === null) {
           dom[prop] = null;
           delete dom[INTERNAL_VAR_NAME].props[prop];
-        } else if (dom[prop] !== vDom.props[prop]) {
+        } else if (dom[INTERNAL_VAR_NAME].props[prop] !== vDom.props[prop]) {
           dom[prop] = vDom.props[prop];
           dom[INTERNAL_VAR_NAME].props[prop] = vDom.props[prop];
         }
@@ -420,7 +413,7 @@ function updateDom(dom, vDom, parent) {
           dom.appendChild(childDom);
 
           if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
-            emitMount(parent[INTERNAL_VAR_NAME].children[id]);
+            emitMount(parent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
           }
         } else {
           updateDom(dom.childNodes[index], child, parent);
@@ -490,7 +483,7 @@ class Component {
     this[INTERNAL_VAR_NAME].app = parent ? parent[INTERNAL_VAR_NAME].app : this;
     this[INTERNAL_VAR_NAME].name = opts.name;
     this[INTERNAL_VAR_NAME].id = opts.id;
-    this[INTERNAL_VAR_NAME].scope = opts.scope;
+    this[INTERNAL_VAR_NAME].scope = opts.manifest.scope === false ? false : opts.scope;
     this[INTERNAL_VAR_NAME].children = {};
     this[INTERNAL_VAR_NAME].props = opts.props ? opts.props : {};
 

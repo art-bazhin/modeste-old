@@ -1,11 +1,11 @@
 import { INTERNAL_VAR_NAME as m } from '../constants';
-import prepareVDom from './prepareVDom';
+import addClass from '../vDom/addClass';
 import createComponent from '../component/createComponent';
 import render from '../component/render';
 import emitMount from '../component/emitMount';
 
 export default function createDom(vDom, parent) {
-  prepareVDom(vDom, parent[m].scope);
+  addClass(vDom, parent[m].scope);
 
   if (!vDom) {
     return document.createComment('');
@@ -50,7 +50,7 @@ export default function createDom(vDom, parent) {
         dom.appendChild(childDom);
 
         if (parent[m].mounted && childDom[m] && childDom[m].id) {
-          emitMount(parent[m].children[id]);
+          emitMount(parent[m].children[childDom[m].id]);
         }
       });
 
