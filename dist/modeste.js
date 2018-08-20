@@ -224,7 +224,7 @@ function createDom(vDom, parent) {
 
         if (vDom.ref) vDom.ref(component);
 
-        render$1(component);
+        render(component);
         return component[INTERNAL_VAR_NAME].dom;
       }
 
@@ -277,7 +277,7 @@ function sameTypeAndTag(dom, vDom) {
 
 function setProps(component, props) {
   if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component.props, props)) {
-    component.props = props;
+    component[INTERNAL_VAR_NAME].props = props;
     render(component);
   }
 }
@@ -303,7 +303,7 @@ function updateComponentDom(dom, vDom, parent) {
 
   if (vDom.ref) vDom.ref(component);
 
-  render$1(component);
+  render(component);
 
   if (parent[INTERNAL_VAR_NAME].mounted) emitMount(component);
 }
@@ -454,7 +454,7 @@ class ModesteError extends Error {
   }
 }
 
-function render$1(component$$1) {
+function render(component$$1) {
   const mounting = !component$$1[INTERNAL_VAR_NAME].dom;
 
   if (mounting) emitHook(component$$1, 'willMount');
@@ -492,6 +492,7 @@ class Component {
     this[INTERNAL_VAR_NAME].id = opts.id;
     this[INTERNAL_VAR_NAME].scope = opts.scope;
     this[INTERNAL_VAR_NAME].children = {};
+    this[INTERNAL_VAR_NAME].props = opts.props ? opts.props : {};
 
     this[INTERNAL_VAR_NAME].render = opts.manifest.render.bind(this);
     this[INTERNAL_VAR_NAME].shouldUpdateData = shouldUpdateData;
@@ -499,8 +500,6 @@ class Component {
 
     registerHooks(this, opts.manifest);
     emitHook(this, 'willCreate');
-
-    this.props = opts.props ? opts.props : {};
 
     if (opts.manifest.data) {
       this[INTERNAL_VAR_NAME].data = opts.manifest.data();
@@ -514,7 +513,7 @@ class Component {
           set: function(value) {
             if (this[INTERNAL_VAR_NAME].shouldUpdateData(this[INTERNAL_VAR_NAME].data[prop], value)) {
               this[INTERNAL_VAR_NAME].data[prop] = value;
-              render$1(this);
+              render(this);
             }
           }
         })
@@ -537,23 +536,30 @@ class Component {
   }
 
   render() {
-    render$1(this);
+    render(this);
+  }
+
+  get props() {
+    return this[INTERNAL_VAR_NAME].props;
   }
 }
 
 let scope = generateScope(ROOT_NAME);
 
 class Modeste extends Component {
-  constructor(manifest) {
+  constructor(manifest, props) {
     super({
       name: ROOT_NAME,
       id: ROOT_NAME,
       manifest,
+      props,
       scope
     });
 
     if (manifest.style) addStyles(manifest.style(), scope);
-    this[INTERNAL_VAR_NAME].wrap = document.querySelector(manifest.selector);
+    this[INTERNAL_VAR_NAME].wrap = manifest.selector
+      ? document.querySelector(manifest.selector)
+      : document.createElement('div');
   }
 
   render() {
@@ -563,6 +569,10 @@ class Modeste extends Component {
       this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
       emitMount(this);
     }
+  }
+
+  get $dom() {
+    return this[INTERNAL_VAR_NAME].dom;
   }
 }
 

@@ -19,6 +19,7 @@ export default class Component {
     this[m].id = opts.id;
     this[m].scope = opts.scope;
     this[m].children = {};
+    this[m].props = opts.props ? opts.props : {};
 
     this[m].render = opts.manifest.render.bind(this);
     this[m].shouldUpdateData = shouldUpdateData;
@@ -26,8 +27,6 @@ export default class Component {
 
     registerHooks(this, opts.manifest);
     emitHook(this, 'willCreate');
-
-    this.props = opts.props ? opts.props : {};
 
     if (opts.manifest.data) {
       this[m].data = opts.manifest.data();
@@ -65,5 +64,9 @@ export default class Component {
 
   render() {
     render(this);
+  }
+
+  get props() {
+    return this[m].props;
   }
 }
