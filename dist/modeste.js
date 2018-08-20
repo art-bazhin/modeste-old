@@ -126,7 +126,7 @@ function toKebabCase(str) {
   return str.replace(/([A-Z])/g, '-$1').toLowerCase();
 }
 
-function tag(tag, opts, children) {
+function createTagNode(tag, opts, children) {
   let props = {};
   let attrs = {};
 
@@ -156,7 +156,7 @@ function tag(tag, opts, children) {
   return node;
 }
 
-function component(component, opts) {
+function createComponentNode(component, opts) {
   let props = {};
   let node = { component, props };
 
@@ -449,29 +449,29 @@ class ModesteError extends Error {
   }
 }
 
-function render(component$$1) {
-  const mounting = !component$$1[INTERNAL_VAR_NAME].dom;
+function render(component) {
+  const mounting = !component[INTERNAL_VAR_NAME].dom;
 
-  if (mounting) emitHook(component$$1, 'willMount');
-  else emitHook(component$$1, 'willUpdate');
+  if (mounting) emitHook(component, 'willMount');
+  else emitHook(component, 'willUpdate');
 
-  let vDom = component$$1[INTERNAL_VAR_NAME].render(tag, component);
+  let vDom = component[INTERNAL_VAR_NAME].render(createTagNode, createComponentNode);
 
   if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
     throw new ModesteError(
-      `${component$$1[INTERNAL_VAR_NAME].name}: Component root must be a tag`
+      `${component[INTERNAL_VAR_NAME].name}: Component root must be a tag`
     );
   }
 
   if (mounting) {
-    component$$1[INTERNAL_VAR_NAME].dom = createDom(vDom, component$$1, true);
+    component[INTERNAL_VAR_NAME].dom = createDom(vDom, component, true);
   } else {
-    updateDom(component$$1[INTERNAL_VAR_NAME].dom, vDom, component$$1, true);
+    updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component, true);
   }
 
-  component$$1[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component$$1[INTERNAL_VAR_NAME].id;
+  component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component[INTERNAL_VAR_NAME].id;
 
-  if (!mounting) emitHook(component$$1, 'didUpdate');
+  if (!mounting) emitHook(component, 'didUpdate');
 }
 
 class Component {

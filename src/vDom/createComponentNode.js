@@ -1,4 +1,4 @@
-export default function component(component, opts) {
+export default function createComponentNode(component, opts) {
   let props = {};
   let node = { component, props };
 
