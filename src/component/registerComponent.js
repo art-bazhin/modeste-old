@@ -6,7 +6,7 @@ import addStyles from '../dom/addStyles';
 
 export default function registerComponent(parent, name, manifest) {
   if (!parent[m].factories[name]) {
-    let scope = generateScope(name);
+    let scope = manifest.scope !== false ? generateScope(name) : false;
 
     addStyles(manifest.style(), scope);
 

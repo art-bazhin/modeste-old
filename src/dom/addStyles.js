@@ -8,6 +8,8 @@ export default function addStyles(style, scope) {
     let repl = '.' + scope;
 
     styleElement.textContent = style.replace(regex, repl);
+  } else {
+    styleElement.textContent = style;
   }
 
   document.head.appendChild(styleElement);

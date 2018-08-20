@@ -86,6 +86,8 @@ function addStyles(style, scope) {
     let repl = '.' + scope;
 
     styleElement.textContent = style.replace(regex, repl);
+  } else {
+    styleElement.textContent = style;
   }
 
   document.head.appendChild(styleElement);
@@ -95,7 +97,7 @@ function addStyles(style, scope) {
 
 function registerComponent(parent, name, manifest) {
   if (!parent[INTERNAL_VAR_NAME].factories[name]) {
-    let scope = generateScope(name);
+    let scope = manifest.scope !== false ? generateScope(name) : false;
 
     addStyles(manifest.style(), scope);
 
@@ -483,7 +485,7 @@ class Component {
     this[INTERNAL_VAR_NAME].app = parent ? parent[INTERNAL_VAR_NAME].app : this;
     this[INTERNAL_VAR_NAME].name = opts.name;
     this[INTERNAL_VAR_NAME].id = opts.id;
-    this[INTERNAL_VAR_NAME].scope = opts.manifest.scope === false ? false : opts.scope;
+    this[INTERNAL_VAR_NAME].scope = opts.scope;
     this[INTERNAL_VAR_NAME].children = {};
     this[INTERNAL_VAR_NAME].props = opts.props ? opts.props : {};
 

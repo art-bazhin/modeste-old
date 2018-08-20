@@ -17,7 +17,7 @@ export default class Component {
     this[m].app = parent ? parent[m].app : this;
     this[m].name = opts.name;
     this[m].id = opts.id;
-    this[m].scope = opts.manifest.scope === false ? false : opts.scope;
+    this[m].scope = opts.scope;
     this[m].children = {};
     this[m].props = opts.props ? opts.props : {};
 
