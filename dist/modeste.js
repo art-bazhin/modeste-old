@@ -79,7 +79,7 @@ function generateId(store, middleware) {
 const scopes = {};
 
 function generateScope(name) {
-  return generateId(scopes, id => `__${name}_${id}__`);
+  return generateId(scopes, id => `${name}_${id}`);
 }
 
 function addStyles(style, scope) {
