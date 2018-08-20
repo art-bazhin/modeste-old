@@ -57,12 +57,18 @@ function emitHook(component, hook) {
   if (component[INTERNAL_VAR_NAME][hook]) component[INTERNAL_VAR_NAME][hook]();
 }
 
-function generateId(maxValue, store, middleware) {
-  let id;
+const MAX_VALUE = 1000000000000;
+
+function generateId(store, middleware) {
+  let value, id;
 
   do {
-    id = (Math.random() * maxValue).toFixed(0);
-    if (middleware) id = middleware(id);
+    value = value
+      ? value + Math.floor(Math.random() * 35).toFixed(36)
+      : Math.floor(Math.random() * MAX_VALUE).toString(36);
+
+    id = value;
+    if (middleware) id = middleware(value);
   } while (store[id]);
 
   store[id] = true;
@@ -73,7 +79,7 @@ function generateId(maxValue, store, middleware) {
 const scopes = {};
 
 function generateScope(name) {
-  return generateId(1000000, scopes, id => `__${name}_${id}__`);
+  return generateId(scopes, id => `__${name}_${id}__`);
 }
 
 function addStyles(style, scope) {
@@ -102,7 +108,7 @@ function registerComponent(parent, name, manifest) {
     addStyles(manifest.style(), scope);
 
     parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
-      let id = generateId(1000000, parent[INTERNAL_VAR_NAME].children);
+      let id = generateId(parent[INTERNAL_VAR_NAME].children);
 
       let component = new Component(
         {
@@ -123,7 +129,9 @@ function registerComponent(parent, name, manifest) {
 }
 
 function toKebabCase(str) {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase();
+  let kebab = str.replace(/([A-Z])/g, '-$1').toLowerCase();
+  if (kebab[0] === '-') return kebab.substr(1);
+  return kebab;
 }
 
 function createTagNode(tag, opts, children) {
