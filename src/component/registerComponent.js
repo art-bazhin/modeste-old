@@ -11,7 +11,7 @@ export default function registerComponent(parent, name, manifest) {
     addStyles(manifest.style(), scope);
 
     parent[m].factories[name] = (props, parent) => {
-      let id = generateId(1000000, parent[m].children);
+      let id = generateId(parent[m].children);
 
       let component = new Component(
         {

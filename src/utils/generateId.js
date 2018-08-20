@@ -1,9 +1,15 @@
-export default function generateId(maxValue, store, middleware) {
-  let id;
+const MAX_VALUE = 1000000000000;
+
+export default function generateId(store, middleware) {
+  let value, id;
 
   do {
-    id = (Math.random() * maxValue).toFixed(0);
-    if (middleware) id = middleware(id);
+    value = value
+      ? value + Math.floor(Math.random() * 35).toFixed(36)
+      : Math.floor(Math.random() * MAX_VALUE).toString(36);
+
+    id = value;
+    if (middleware) id = middleware(value);
   } while (store[id]);
 
   store[id] = true;
