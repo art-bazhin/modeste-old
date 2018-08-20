@@ -559,13 +559,15 @@ class Modeste extends Component {
     if (manifest.style) addStyles(manifest.style(), scope);
     this[INTERNAL_VAR_NAME].wrap = manifest.selector
       ? document.querySelector(manifest.selector)
-      : document.createElement('div');
+      : null;
   }
 
   render() {
     super.render();
 
-    if (this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
+    if (!this[INTERNAL_VAR_NAME].mounted && !this[INTERNAL_VAR_NAME].wrap) return emitMount(this);
+
+    if (this[INTERNAL_VAR_NAME].wrap && this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
       this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
       emitMount(this);
     }
