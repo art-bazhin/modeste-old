@@ -459,7 +459,7 @@ function render(component) {
   if (mounting) emitHook(component, 'willMount');
   else emitHook(component, 'willUpdate');
 
-  let vDom = component[INTERNAL_VAR_NAME].render(createTagNode, createComponentNode);
+  let vDom = component[INTERNAL_VAR_NAME].render(createTagNode, createComponentNode, component[INTERNAL_VAR_NAME].props);
 
   if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
     throw new ModesteError(
@@ -534,16 +534,24 @@ class Component {
     emitHook(this, 'didCreate');
   }
 
-  render() {
-    render(this);
+  get $data() {
+    return this[INTERNAL_VAR_NAME].data;
   }
 
-  get props() {
+  get $props() {
     return this[INTERNAL_VAR_NAME].props;
   }
 
   get $app() {
     return this[INTERNAL_VAR_NAME].app;
+  }
+
+  get $dom() {
+    return this[INTERNAL_VAR_NAME].dom;
+  }
+
+  $render() {
+    render(this);
   }
 }
 
@@ -563,10 +571,20 @@ class Modeste extends Component {
     this[INTERNAL_VAR_NAME].wrap = manifest.selector
       ? document.querySelector(manifest.selector)
       : null;
+
+    this.$render();
   }
 
-  render() {
-    super.render();
+  get $wrap() {
+    return this[INTERNAL_VAR_NAME].wrap;
+  }
+
+  set $props(props) {
+    setProps(this, props);
+  }
+
+  $render() {
+    super.$render();
 
     if (!this[INTERNAL_VAR_NAME].mounted && !this[INTERNAL_VAR_NAME].wrap) return emitMount(this);
 
@@ -574,10 +592,6 @@ class Modeste extends Component {
       this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
       emitMount(this);
     }
-  }
-
-  get $dom() {
-    return this[INTERNAL_VAR_NAME].dom;
   }
 }
 

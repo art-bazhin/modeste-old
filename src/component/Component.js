@@ -62,15 +62,23 @@ export default class Component {
     emitHook(this, 'didCreate');
   }
 
-  render() {
-    render(this);
+  get $data() {
+    return this[m].data;
   }
 
-  get props() {
+  get $props() {
     return this[m].props;
   }
 
   get $app() {
     return this[m].app;
+  }
+
+  get $dom() {
+    return this[m].dom;
+  }
+
+  $render() {
+    render(this);
   }
 }

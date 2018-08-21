@@ -12,7 +12,7 @@ export default function render(component) {
   if (mounting) emitHook(component, 'willMount');
   else emitHook(component, 'willUpdate');
 
-  let vDom = component[m].render(t, c);
+  let vDom = component[m].render(t, c, component[m].props);
 
   if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
     throw new ModesteError(
