@@ -57,29 +57,25 @@ function emitHook(component, hook) {
   if (component[INTERNAL_VAR_NAME][hook]) component[INTERNAL_VAR_NAME][hook]();
 }
 
-const MAX_VALUE = 1000000000000;
+const ID_RND_LENGTH = 4;
+let idCounter = 0;
 
-function generateId(store, middleware) {
-  let value, id;
+function generateId(middleware) {
+  let random = Math.random()
+    .toString(36)
+    .substr(2, ID_RND_LENGTH);
 
-  do {
-    value = value
-      ? value + Math.floor(Math.random() * 35).toFixed(36)
-      : Math.floor(Math.random() * MAX_VALUE).toString(36);
+  let id =
+    random +
+    '0'.repeat(ID_RND_LENGTH - random.length) +
+    (idCounter++).toString(36);
 
-    id = value;
-    if (middleware) id = middleware(value);
-  } while (store[id]);
-
-  store[id] = true;
-
+  if (middleware) return middleware(id);
   return id;
 }
 
-const scopes = {};
-
 function generateScope(name) {
-  return generateId(scopes, id => `${name}_${id}`);
+  return generateId(id => `${name}_${id}`);
 }
 
 function addStyles(style, scope) {
@@ -108,7 +104,7 @@ function registerComponent(parent, name, manifest) {
     addStyles(manifest.style(), scope);
 
     parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
-      let id = generateId(parent[INTERNAL_VAR_NAME].children);
+      let id = generateId();
 
       let component = new Component(
         {
