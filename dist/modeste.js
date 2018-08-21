@@ -541,6 +541,10 @@ class Component {
   get props() {
     return this[INTERNAL_VAR_NAME].props;
   }
+
+  get $app() {
+    return this[INTERNAL_VAR_NAME].app;
+  }
 }
 
 let scope = generateScope(ROOT_NAME);

@@ -69,4 +69,8 @@ export default class Component {
   get props() {
     return this[m].props;
   }
+
+  get $app() {
+    return this[m].app;
+  }
 }
