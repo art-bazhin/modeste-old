@@ -22,6 +22,8 @@ export default function createDom(vDom, parent) {
         if (vDom.ref) vDom.ref(component);
 
         render(component);
+
+        if (vDom.key) component[m].dom[m].key = vDom.key;
         return component[m].dom;
       }
 
@@ -55,6 +57,7 @@ export default function createDom(vDom, parent) {
       });
 
       if (vDom.ref) vDom.ref(dom);
+      if (vDom.key) dom[m].key = vDom.key;
 
       return dom;
   }

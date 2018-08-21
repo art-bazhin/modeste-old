@@ -98,15 +98,21 @@ export default function updateDom(dom, vDom, parent) {
 
       if (keyed) {
         let nodes = {};
-
-        dom.childNodes.forEach(child => {
-          nodes[child[m].key] = child;
-          dom.removeChild(child);
-        });
+        let vNodes = {};
 
         vDom.children.forEach(child => {
-          if (nodes[child.key]) dom.appendChild(child);
-          else dom.appendChild(createDom(child));
+          vNodes[child.key] = child;
+        });
+
+        while (dom.firstChild) {
+          nodes[dom.firstChild[m].key] = dom.removeChild(dom.firstChild);
+        }
+
+        vDom.children.forEach(child => {
+          if (nodes[child.key]) {
+            dom.appendChild(nodes[child.key]);
+            updateDom(nodes[child.key], child, parent);
+          } else dom.appendChild(createDom(child, parent));
         });
       } else {
         vDom.children.forEach((child, index) => {
@@ -130,6 +136,10 @@ export default function updateDom(dom, vDom, parent) {
 
       // Run ref function
       if (vDom.ref) vDom.ref(dom);
+
+      // Store the key
+      if (vDom.key) dom[m].key = vDom.key;
+      else if (dom[m].key) delete dom[m].key;
 
       break;
 

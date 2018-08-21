@@ -101,7 +101,7 @@ function registerComponent(parent, name, manifest) {
   if (!parent[INTERNAL_VAR_NAME].factories[name]) {
     let scope = manifest.scope !== false ? generateScope(name) : false;
 
-    addStyles(manifest.style(), scope);
+    if (manifest.style) addStyles(manifest.style(), scope);
 
     parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
       let id = generateId();
@@ -224,6 +224,8 @@ function createDom(vDom, parent) {
         if (vDom.ref) vDom.ref(component);
 
         render(component);
+
+        if (vDom.key) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
         return component[INTERNAL_VAR_NAME].dom;
       }
 
@@ -257,6 +259,7 @@ function createDom(vDom, parent) {
       });
 
       if (vDom.ref) vDom.ref(dom);
+      if (vDom.key) dom[INTERNAL_VAR_NAME].key = vDom.key;
 
       return dom;
   }
@@ -286,13 +289,15 @@ function updateComponentDom(dom, vDom, parent) {
     let id = dom[INTERNAL_VAR_NAME].id;
     let component = parent[INTERNAL_VAR_NAME].children[id];
 
-    if (!vDom.props) vDom.props = {};
-
     if (component[INTERNAL_VAR_NAME].name === vDom.component) {
       component[INTERNAL_VAR_NAME].dom = dom;
       setProps(component, vDom.props);
 
       if (vDom.ref) vDom.ref(component);
+
+      if (vDom.key) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
+      else if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key) delete component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
+
       return;
     } else parent[INTERNAL_VAR_NAME].removeChild(id);
   }
@@ -303,6 +308,9 @@ function updateComponentDom(dom, vDom, parent) {
   if (vDom.ref) vDom.ref(component);
 
   render(component);
+
+  if (vDom.key) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
+  else if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key) delete component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
 
   if (parent[INTERNAL_VAR_NAME].mounted) emitMount(component);
 }
@@ -415,15 +423,21 @@ function updateDom(dom, vDom, parent) {
 
       if (keyed) {
         let nodes = {};
-
-        dom.childNodes.forEach(child => {
-          nodes[child[INTERNAL_VAR_NAME].key] = child;
-          dom.removeChild(child);
-        });
+        let vNodes = {};
 
         vDom.children.forEach(child => {
-          if (nodes[child.key]) dom.appendChild(child);
-          else dom.appendChild(createDom(child));
+          vNodes[child.key] = child;
+        });
+
+        while (dom.firstChild) {
+          nodes[dom.firstChild[INTERNAL_VAR_NAME].key] = dom.removeChild(dom.firstChild);
+        }
+
+        vDom.children.forEach(child => {
+          if (nodes[child.key]) {
+            dom.appendChild(nodes[child.key]);
+            updateDom(nodes[child.key], child, parent);
+          } else dom.appendChild(createDom(child, parent));
         });
       } else {
         vDom.children.forEach((child, index) => {
@@ -447,6 +461,10 @@ function updateDom(dom, vDom, parent) {
 
       // Run ref function
       if (vDom.ref) vDom.ref(dom);
+
+      // Store the key
+      if (vDom.key) dom[INTERNAL_VAR_NAME].key = vDom.key;
+      else if (dom[INTERNAL_VAR_NAME].key) delete dom[INTERNAL_VAR_NAME].key;
 
       break;
 
@@ -482,9 +500,9 @@ function render(component) {
   }
 
   if (mounting) {
-    component[INTERNAL_VAR_NAME].dom = createDom(vDom, component, true);
+    component[INTERNAL_VAR_NAME].dom = createDom(vDom, component);
   } else {
-    updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component, true);
+    updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component);
   }
 
   component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component[INTERNAL_VAR_NAME].id;

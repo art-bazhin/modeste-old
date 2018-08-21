@@ -8,7 +8,7 @@ export default function registerComponent(parent, name, manifest) {
   if (!parent[m].factories[name]) {
     let scope = manifest.scope !== false ? generateScope(name) : false;
 
-    addStyles(manifest.style(), scope);
+    if (manifest.style) addStyles(manifest.style(), scope);
 
     parent[m].factories[name] = (props, parent) => {
       let id = generateId();

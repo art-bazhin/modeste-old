@@ -9,13 +9,15 @@ export default function updateComponentDom(dom, vDom, parent) {
     let id = dom[m].id;
     let component = parent[m].children[id];
 
-    if (!vDom.props) vDom.props = {};
-
     if (component[m].name === vDom.component) {
       component[m].dom = dom;
       setProps(component, vDom.props);
 
       if (vDom.ref) vDom.ref(component);
+
+      if (vDom.key) component[m].dom[m].key = vDom.key;
+      else if (component[m].dom[m].key) delete component[m].dom[m].key;
+
       return;
     } else parent[m].removeChild(id);
   }
@@ -26,6 +28,9 @@ export default function updateComponentDom(dom, vDom, parent) {
   if (vDom.ref) vDom.ref(component);
 
   render(component);
+
+  if (vDom.key) component[m].dom[m].key = vDom.key;
+  else if (component[m].dom[m].key) delete component[m].dom[m].key;
 
   if (parent[m].mounted) emitMount(component);
 }

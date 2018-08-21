@@ -21,9 +21,9 @@ export default function render(component) {
   }
 
   if (mounting) {
-    component[m].dom = createDom(vDom, component, true);
+    component[m].dom = createDom(vDom, component);
   } else {
-    updateDom(component[m].dom, vDom, component, true);
+    updateDom(component[m].dom, vDom, component);
   }
 
   component[m].dom[m].id = component[m].id;
