@@ -411,24 +411,38 @@ function updateDom(dom, vDom, parent) {
       });
 
       // Process child nodes
-      if (!vDom.children) vDom.children = [];
+      let keyed = vDom.children[0] && vDom.children[0].key;
 
-      vDom.children.forEach((child, index) => {
-        if (!dom.childNodes[index]) {
-          let childDom = createDom(child, parent);
-          dom.appendChild(childDom);
+      if (keyed) {
+        let nodes = {};
 
-          if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
-            emitMount(parent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
+        dom.childNodes.forEach(child => {
+          nodes[child[INTERNAL_VAR_NAME].key] = child;
+          dom.removeChild(child);
+        });
+
+        vDom.children.forEach(child => {
+          if (nodes[child.key]) dom.appendChild(child);
+          else dom.appendChild(createDom(child));
+        });
+      } else {
+        vDom.children.forEach((child, index) => {
+          if (!dom.childNodes[index]) {
+            let childDom = createDom(child, parent);
+            dom.appendChild(childDom);
+
+            if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
+              emitMount(parent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
+            }
+          } else {
+            updateDom(dom.childNodes[index], child, parent);
           }
-        } else {
-          updateDom(dom.childNodes[index], child, parent);
-        }
-      });
+        });
 
-      while (dom.childNodes[vDom.children.length]) {
-        let child = dom.childNodes[vDom.children.length];
-        dom.removeChild(child);
+        while (dom.childNodes[vDom.children.length]) {
+          let child = dom.childNodes[vDom.children.length];
+          dom.removeChild(child);
+        }
       }
 
       // Run ref function
