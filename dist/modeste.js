@@ -275,7 +275,7 @@ function sameTypeAndTag(dom, vDom) {
 }
 
 function setProps(component, props) {
-  if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component.props, props)) {
+  if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component[INTERNAL_VAR_NAME].props, props)) {
     component[INTERNAL_VAR_NAME].props = props;
     render(component);
   }
