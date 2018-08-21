@@ -17,6 +17,9 @@ export default class Modeste extends Component {
       scope
     });
 
+    this[m].parent = null;
+    this[m].isApp = true;
+
     if (manifest.style) addStyles(manifest.style(), scope);
     this[m].wrap = manifest.selector
       ? document.querySelector(manifest.selector)

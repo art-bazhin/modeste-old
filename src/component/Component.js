@@ -5,6 +5,7 @@ import registerHooks from './registerHooks';
 import emitHook from './emitHook';
 import registerComponent from './registerComponent';
 import render from './render';
+import asyncRender from './asyncRender';
 
 export default class Component {
   constructor(opts, parent) {
@@ -40,7 +41,7 @@ export default class Component {
           set: function(value) {
             if (this[m].shouldUpdateData(this[m].data[prop], value)) {
               this[m].data[prop] = value;
-              render(this);
+              asyncRender(this);
             }
           }
         })

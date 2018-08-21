@@ -57,7 +57,7 @@ function emitHook(component, hook) {
   if (component[INTERNAL_VAR_NAME][hook]) component[INTERNAL_VAR_NAME][hook]();
 }
 
-const ID_RND_LENGTH = 4;
+const ID_RND_LENGTH = 6;
 let idCounter = 0;
 
 function generateId(middleware) {
@@ -478,6 +478,49 @@ function render(component) {
   if (!mounting) emitHook(component, 'didUpdate');
 }
 
+let asyncCall;
+let resolvedPromise;
+
+if (window.setImmediate) asyncCall = window.setImmediate;
+else if (window.Promise) {
+  resolvedPromise = Promise.resolve();
+  asyncCall = function(func) {
+    resolvedPromise.then(func);
+  };
+} else {
+  asyncCall = function(func) {
+    setTimeout(func, 0);
+  };
+}
+
+var asyncCall$1 = asyncCall;
+
+let renderQueue = {};
+let needToRender = true;
+
+function flushRender() {
+  Object.keys(renderQueue).forEach(key => {
+    if (renderQueue[key][INTERNAL_VAR_NAME].isApp || renderQueue[key][INTERNAL_VAR_NAME].parent.mounted)
+      render(renderQueue[key]);
+  });
+  renderQueue = {};
+  needToRender = true;
+}
+
+function deferredRender(component, callback) {
+  if (!renderQueue[component[INTERNAL_VAR_NAME].id]) {
+    renderQueue[component[INTERNAL_VAR_NAME].id] = component;
+  }
+
+  if (needToRender) {
+    needToRender = false;
+    asyncCall$1(function() {
+      flushRender();
+      if (callback) callback();
+    });
+  }
+}
+
 class Component {
   constructor(opts, parent) {
     this[INTERNAL_VAR_NAME] = {};
@@ -512,7 +555,7 @@ class Component {
           set: function(value) {
             if (this[INTERNAL_VAR_NAME].shouldUpdateData(this[INTERNAL_VAR_NAME].data[prop], value)) {
               this[INTERNAL_VAR_NAME].data[prop] = value;
-              render(this);
+              deferredRender(this);
             }
           }
         })
@@ -566,6 +609,9 @@ class Modeste extends Component {
       props,
       scope
     });
+
+    this[INTERNAL_VAR_NAME].parent = null;
+    this[INTERNAL_VAR_NAME].isApp = true;
 
     if (manifest.style) addStyles(manifest.style(), scope);
     this[INTERNAL_VAR_NAME].wrap = manifest.selector
