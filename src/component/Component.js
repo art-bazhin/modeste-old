@@ -21,18 +21,36 @@ export default class Component {
     this[m].scope = opts.scope;
     this[m].children = {};
     this[m].props = opts.props ? opts.props : {};
+    this[m].subscribers = {};
 
-    this[m].render = opts.manifest.render.bind(this);
+    this[m].subscriptions = opts.manifest.subscriptions
+      ? opts.manifest.subscriptions
+      : [];
+
+    this[m].render = opts.manifest.render
+      ? opts.manifest.render.bind(this)
+      : null;
+
     this[m].shouldUpdateData = shouldUpdateData;
     this[m].shouldUpdateProps = shouldUpdateProps;
 
     registerHooks(this, opts.manifest);
     emitHook(this, 'willCreate');
 
+    this[m].subscriptions.forEach(item => {
+      let store = item.store;
+      item.fields.forEach(field => {
+        if (store[m].data.hasOwnProperty(field))
+          store[m].subscribers[field][opts.id] = this;
+      });
+    });
+
     if (opts.manifest.data) {
       this[m].data = opts.manifest.data();
 
-      Object.keys(this[m].data).forEach(prop =>
+      Object.keys(this[m].data).forEach(prop => {
+        this[m].subscribers[prop] = {};
+
         Object.defineProperty(this, prop, {
           enumerable: true,
           get: function() {
@@ -42,10 +60,15 @@ export default class Component {
             if (this[m].shouldUpdateData(this[m].data[prop], value)) {
               this[m].data[prop] = value;
               asyncRender(this);
+
+              let subscribers = this[m].subscribers[prop];
+              Object.keys(subscribers).forEach(key =>
+                asyncRender(subscribers[key])
+              );
             }
           }
-        })
-      );
+        });
+      });
     }
 
     if (opts.manifest.components) {

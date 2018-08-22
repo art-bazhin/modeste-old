@@ -3,6 +3,7 @@ import createComponent from '../component/createComponent';
 import setProps from '../component/setProps';
 import render from '../component/render';
 import emitMount from '../component/emitMount';
+import removeComponent from '../component/removeComponent';
 
 export default function updateComponentDom(dom, vDom, parent) {
   if (dom[m] && dom[m].id) {
@@ -19,7 +20,7 @@ export default function updateComponentDom(dom, vDom, parent) {
       else if (component[m].dom[m].key) delete component[m].dom[m].key;
 
       return;
-    } else parent[m].removeChild(id);
+    } else removeComponent(parent[m].children[id]);
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);

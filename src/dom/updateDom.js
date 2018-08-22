@@ -3,12 +3,10 @@ import addClass from '../vDom/addClass';
 import sameTypeAndTag from './sameTypeAndTag';
 import updateComponentDom from './updateComponentDom';
 import createDom from './createDom';
-import removeChild from '../component/removeChild';
+import removeComponent from '../component/removeComponent';
 import emitMount from '../component/emitMount';
 
 export default function updateDom(dom, vDom, parent) {
-  addClass(vDom, parent[m].scope);
-
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
     return;
@@ -16,7 +14,7 @@ export default function updateDom(dom, vDom, parent) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[m] && dom[m].id) {
-      removeChild(parent, dom[m].id);
+      removeComponent(parent[m].children[dom[m].id]);
     }
 
     let newDom = createDom(vDom, parent);
@@ -28,6 +26,8 @@ export default function updateDom(dom, vDom, parent) {
 
     return;
   }
+
+  addClass(vDom, parent[m].scope);
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:

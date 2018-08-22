@@ -6,15 +6,12 @@ let renderQueue = {};
 let needToRender = true;
 
 function flushRender() {
-  Object.keys(renderQueue).forEach(key => {
-    if (renderQueue[key][m].isApp || renderQueue[key][m].parent.mounted)
-      render(renderQueue[key]);
-  });
+  Object.keys(renderQueue).forEach(key => render(renderQueue[key]));
   renderQueue = {};
   needToRender = true;
 }
 
-export default function deferredRender(component, callback) {
+export default function asyncRender(component, callback) {
   if (!renderQueue[component[m].id]) {
     renderQueue[component[m].id] = component;
   }

@@ -7,26 +7,26 @@ import updateDom from '../dom/updateDom';
 import ModesteError from '../utils/ModesteError';
 
 export default function render(component) {
-  const mounting = !component[m].dom;
+  if (component[m].render) {
+    if (!component[m].mounted) emitHook(component, 'willMount');
+    else emitHook(component, 'willUpdate');
 
-  if (mounting) emitHook(component, 'willMount');
-  else emitHook(component, 'willUpdate');
+    let vDom = component[m].render(t, c, component[m].props);
 
-  let vDom = component[m].render(t, c, component[m].props);
+    if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
+      throw new ModesteError(
+        `${component[m].name}: Component root must be a tag`
+      );
+    }
 
-  if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-    throw new ModesteError(
-      `${component[m].name}: Component root must be a tag`
-    );
-  }
+    if (!component[m].dom) {
+      component[m].dom = createDom(vDom, component);
+    } else {
+      updateDom(component[m].dom, vDom, component);
+    }
 
-  if (mounting) {
-    component[m].dom = createDom(vDom, component);
-  } else {
-    updateDom(component[m].dom, vDom, component);
-  }
+    component[m].dom[m].id = component[m].id;
 
-  component[m].dom[m].id = component[m].id;
-
-  if (!mounting) emitHook(component, 'didUpdate');
+    if (component[m].mounted) emitHook(component, 'didUpdate');
+  } else emitHook(component, 'didUpdate');
 }

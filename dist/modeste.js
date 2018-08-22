@@ -284,6 +284,31 @@ function setProps(component, props) {
   }
 }
 
+function removeComponent(component) {
+  emitHook(component, 'willRemove');
+
+  let parent = component[INTERNAL_VAR_NAME].parent;
+  let id = component[INTERNAL_VAR_NAME].id;
+
+  Object.keys(component[INTERNAL_VAR_NAME].children).forEach(child => {
+    removeComponent(child);
+  });
+
+  component[INTERNAL_VAR_NAME].subscriptions.forEach(item => {
+    let store = item.store;
+    item.fields.forEach(field => {
+      if (store[INTERNAL_VAR_NAME].data.hasOwnProperty(field))
+        delete store[INTERNAL_VAR_NAME].subscribers[field][id];
+    });
+  });
+
+  component[INTERNAL_VAR_NAME].mounted = false;
+  delete component[INTERNAL_VAR_NAME].dom;
+  if (parent) delete parent[INTERNAL_VAR_NAME].children[id];
+
+  emitHook(component, 'didRemove');
+}
+
 function updateComponentDom(dom, vDom, parent) {
   if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
     let id = dom[INTERNAL_VAR_NAME].id;
@@ -299,7 +324,7 @@ function updateComponentDom(dom, vDom, parent) {
       else if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key) delete component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
 
       return;
-    } else parent[INTERNAL_VAR_NAME].removeChild(id);
+    } else removeComponent(parent[INTERNAL_VAR_NAME].children[id]);
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);
@@ -315,25 +340,7 @@ function updateComponentDom(dom, vDom, parent) {
   if (parent[INTERNAL_VAR_NAME].mounted) emitMount(component);
 }
 
-function removeChild(parent, id) {
-  if (parent[INTERNAL_VAR_NAME].children[id]) {
-    let component = parent[INTERNAL_VAR_NAME].children[id];
-
-    emitHook(component, 'willRemove');
-    delete component[INTERNAL_VAR_NAME].dom;
-
-    Object.keys(component[INTERNAL_VAR_NAME].children).forEach(id => {
-      removeChild(id, component);
-    });
-
-    emitHook(component, 'didRemove');
-    delete parent[INTERNAL_VAR_NAME].children[id];
-  }
-}
-
 function updateDom(dom, vDom, parent) {
-  addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
-
   if (vDom && vDom.component) {
     updateComponentDom(dom, vDom, parent);
     return;
@@ -341,7 +348,7 @@ function updateDom(dom, vDom, parent) {
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
-      removeChild(parent, dom[INTERNAL_VAR_NAME].id);
+      removeComponent(parent[INTERNAL_VAR_NAME].children[dom[INTERNAL_VAR_NAME].id]);
     }
 
     let newDom = createDom(vDom, parent);
@@ -353,6 +360,8 @@ function updateDom(dom, vDom, parent) {
 
     return;
   }
+
+  addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
@@ -486,28 +495,28 @@ class ModesteError extends Error {
 }
 
 function render(component) {
-  const mounting = !component[INTERNAL_VAR_NAME].dom;
+  if (component[INTERNAL_VAR_NAME].render) {
+    if (!component[INTERNAL_VAR_NAME].mounted) emitHook(component, 'willMount');
+    else emitHook(component, 'willUpdate');
 
-  if (mounting) emitHook(component, 'willMount');
-  else emitHook(component, 'willUpdate');
+    let vDom = component[INTERNAL_VAR_NAME].render(createTagNode, createComponentNode, component[INTERNAL_VAR_NAME].props);
 
-  let vDom = component[INTERNAL_VAR_NAME].render(createTagNode, createComponentNode, component[INTERNAL_VAR_NAME].props);
+    if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
+      throw new ModesteError(
+        `${component[INTERNAL_VAR_NAME].name}: Component root must be a tag`
+      );
+    }
 
-  if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
-    throw new ModesteError(
-      `${component[INTERNAL_VAR_NAME].name}: Component root must be a tag`
-    );
-  }
+    if (!component[INTERNAL_VAR_NAME].dom) {
+      component[INTERNAL_VAR_NAME].dom = createDom(vDom, component);
+    } else {
+      updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component);
+    }
 
-  if (mounting) {
-    component[INTERNAL_VAR_NAME].dom = createDom(vDom, component);
-  } else {
-    updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component);
-  }
+    component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component[INTERNAL_VAR_NAME].id;
 
-  component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].id = component[INTERNAL_VAR_NAME].id;
-
-  if (!mounting) emitHook(component, 'didUpdate');
+    if (component[INTERNAL_VAR_NAME].mounted) emitHook(component, 'didUpdate');
+  } else emitHook(component, 'didUpdate');
 }
 
 let asyncCall;
@@ -531,15 +540,12 @@ let renderQueue = {};
 let needToRender = true;
 
 function flushRender() {
-  Object.keys(renderQueue).forEach(key => {
-    if (renderQueue[key][INTERNAL_VAR_NAME].isApp || renderQueue[key][INTERNAL_VAR_NAME].parent.mounted)
-      render(renderQueue[key]);
-  });
+  Object.keys(renderQueue).forEach(key => render(renderQueue[key]));
   renderQueue = {};
   needToRender = true;
 }
 
-function deferredRender(component, callback) {
+function asyncRender(component, callback) {
   if (!renderQueue[component[INTERNAL_VAR_NAME].id]) {
     renderQueue[component[INTERNAL_VAR_NAME].id] = component;
   }
@@ -567,18 +573,36 @@ class Component {
     this[INTERNAL_VAR_NAME].scope = opts.scope;
     this[INTERNAL_VAR_NAME].children = {};
     this[INTERNAL_VAR_NAME].props = opts.props ? opts.props : {};
+    this[INTERNAL_VAR_NAME].subscribers = {};
 
-    this[INTERNAL_VAR_NAME].render = opts.manifest.render.bind(this);
+    this[INTERNAL_VAR_NAME].subscriptions = opts.manifest.subscriptions
+      ? opts.manifest.subscriptions
+      : [];
+
+    this[INTERNAL_VAR_NAME].render = opts.manifest.render
+      ? opts.manifest.render.bind(this)
+      : null;
+
     this[INTERNAL_VAR_NAME].shouldUpdateData = shouldUpdateData;
     this[INTERNAL_VAR_NAME].shouldUpdateProps = shouldUpdateProps;
 
     registerHooks(this, opts.manifest);
     emitHook(this, 'willCreate');
 
+    this[INTERNAL_VAR_NAME].subscriptions.forEach(item => {
+      let store = item.store;
+      item.fields.forEach(field => {
+        if (store[INTERNAL_VAR_NAME].data.hasOwnProperty(field))
+          store[INTERNAL_VAR_NAME].subscribers[field][opts.id] = this;
+      });
+    });
+
     if (opts.manifest.data) {
       this[INTERNAL_VAR_NAME].data = opts.manifest.data();
 
-      Object.keys(this[INTERNAL_VAR_NAME].data).forEach(prop =>
+      Object.keys(this[INTERNAL_VAR_NAME].data).forEach(prop => {
+        this[INTERNAL_VAR_NAME].subscribers[prop] = {};
+
         Object.defineProperty(this, prop, {
           enumerable: true,
           get: function() {
@@ -587,11 +611,16 @@ class Component {
           set: function(value) {
             if (this[INTERNAL_VAR_NAME].shouldUpdateData(this[INTERNAL_VAR_NAME].data[prop], value)) {
               this[INTERNAL_VAR_NAME].data[prop] = value;
-              deferredRender(this);
+              asyncRender(this);
+
+              let subscribers = this[INTERNAL_VAR_NAME].subscribers[prop];
+              Object.keys(subscribers).forEach(key =>
+                asyncRender(subscribers[key])
+              );
             }
           }
-        })
-      );
+        });
+      });
     }
 
     if (opts.manifest.components) {
@@ -636,7 +665,7 @@ class Modeste extends Component {
   constructor(manifest, props) {
     super({
       name: ROOT_NAME,
-      id: ROOT_NAME,
+      id: generateId(),
       manifest,
       props,
       scope
@@ -664,9 +693,12 @@ class Modeste extends Component {
   $render() {
     super.$render();
 
+    if (!this[INTERNAL_VAR_NAME].render) return;
     if (!this[INTERNAL_VAR_NAME].mounted && !this[INTERNAL_VAR_NAME].wrap) return emitMount(this);
+    if (this[INTERNAL_VAR_NAME].wrap) {
+      while (this[INTERNAL_VAR_NAME].wrap.firstChild)
+        this[INTERNAL_VAR_NAME].wrap.removeChild(this[INTERNAL_VAR_NAME].wrap.firstChild);
 
-    if (this[INTERNAL_VAR_NAME].wrap && this[INTERNAL_VAR_NAME].wrap.childNodes.length === 0) {
       this[INTERNAL_VAR_NAME].wrap.appendChild(this[INTERNAL_VAR_NAME].dom);
       emitMount(this);
     }
