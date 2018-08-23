@@ -3,7 +3,7 @@
 
 import timeoutCall from '../../src/utils/timeoutCall';
 
-test('Async calling function without a callback (setTimeout realization)', () => {
+test('Async function call without a callback (setTimeout realization)', () => {
   jest.useFakeTimers();
 
   let func = jest.fn();
@@ -20,7 +20,7 @@ test('Async calling function without a callback (setTimeout realization)', () =>
   expect(callback).not.toBeCalled();
 });
 
-test('Async calling function with a callback (setTimeout realization)', () => {
+test('Async function call with a callback (setTimeout realization)', () => {
   jest.useFakeTimers();
 
   let func = jest.fn();
