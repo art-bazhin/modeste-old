@@ -546,27 +546,24 @@ else asyncCall = timeoutCall;
 
 var asyncCall$1 = asyncCall;
 
-let renderQueue = {};
-let needToRender = true;
+let renderQueue = [];
+let rendered = {};
 
 function flushRender() {
-  Object.keys(renderQueue).forEach(key => render(renderQueue[key]));
-  renderQueue = {};
-  needToRender = true;
+  renderQueue.forEach(component => {
+    if (!rendered[component[INTERNAL_VAR_NAME].id]) {
+      render(component);
+      rendered[component[INTERNAL_VAR_NAME].id] = true;
+    }
+  });
+
+  renderQueue = [];
+  rendered = {};
 }
 
 function asyncRender(component, callback) {
-  if (!renderQueue[component[INTERNAL_VAR_NAME].id]) {
-    renderQueue[component[INTERNAL_VAR_NAME].id] = component;
-  }
-
-  if (needToRender) {
-    needToRender = false;
-    asyncCall$1(function() {
-      flushRender();
-      if (callback) callback();
-    });
-  }
+  renderQueue.push(component);
+  if (renderQueue.length === 1) asyncCall$1(flushRender, callback);
 }
 
 class Component {
