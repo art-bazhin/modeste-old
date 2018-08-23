@@ -3,16 +3,30 @@
 
 import promiseCall from '../../src/utils/promiseCall';
 
-test('Async calling function (Promise realization)', () => {
+test('Async function call without a callback (Promise realization)', () => {
   let string = 'waiting';
 
   function func() {
     string = 'done';
   }
 
-  promiseCall(func, function() {
+  return promiseCall(func).then(() => {
     expect(string).toBe('done');
   });
+});
 
-  expect(string).not.toBe('done');
+test('Async function call with a callback (Promise realization)', () => {
+  let string = 'waiting';
+
+  function func() {
+    string = 'done';
+  }
+
+  function callback() {
+    string += ' callback';
+  }
+
+  return promiseCall(func, callback).then(() => {
+    expect(string).toBe('done callback');
+  });
 });

@@ -3,7 +3,7 @@
 
 import immediateCall from '../../src/utils/immediateCall';
 
-test('Async calling function without a callback (setImmediate realization)', () => {
+test('Async function call without a callback (setImmediate realization)', () => {
   jest.useFakeTimers();
 
   let func = jest.fn();
@@ -20,7 +20,7 @@ test('Async calling function without a callback (setImmediate realization)', () 
   expect(callback).not.toBeCalled();
 });
 
-test('Async calling function with a callback (setImmediate realization)', () => {
+test('Async function call with a callback (setImmediate realization)', () => {
   jest.useFakeTimers();
 
   let func = jest.fn();

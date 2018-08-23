@@ -2,22 +2,28 @@
   "env": {
     "development": {
       "presets": [
-        ["env", {
-          "targets": {
-            "browsers": ["last 2 versions", "safari >= 7"]
-          },
-          "modules": false
-        }]
+        [
+          "env",
+          {
+            "targets": {
+              "browsers": ["last 2 versions", "safari >= 7"]
+            },
+            "modules": false
+          }
+        ]
       ],
       "plugins": ["external-helpers"]
     },
     "test": {
       "presets": [
-        ["env", {
-          "targets": {
-            "node": "current"
+        [
+          "env",
+          {
+            "targets": {
+              "node": "current"
+            }
           }
-        }]
+        ]
       ]
     }
   }

@@ -55,21 +55,30 @@ let more = {
   c: arr1
 };
 
-test('Performing shallow comparison of two empty objects', () => {
+let another = {
+  c: 'a',
+  d: arr1
+};
+
+test('Shallow comparison of two empty objects', () => {
   expect(shallowCompare(empty1, empty2)).toBe(true);
 });
 
-test('Performing shallow comparison of two objects with primitive fields', () => {
+test('Shallow comparison of two objects with a primitive fields', () => {
   expect(shallowCompare(obj1, obj2)).toBe(true);
 });
 
-test('Performing shallow comparison of two objects with object fields', () => {
+test('Shallow comparison of two objects with an object fields', () => {
   expect(shallowCompare(first, second)).toBe(true);
   expect(shallowCompare(first, third)).toBe(false);
   expect(shallowCompare(first, fourth)).toBe(false);
 });
 
-test('Performing shallow comparison of two objects with different number of fields', () => {
+test('Shallow comparison of two objects with a different number of fields', () => {
   expect(shallowCompare(less, more)).toBe(false);
   expect(shallowCompare(more, less)).toBe(false);
+});
+
+test('Shallow comparison of two objects with a different fields', () => {
+  expect(shallowCompare(less, another)).toBe(false);
 });

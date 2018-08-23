@@ -525,7 +525,7 @@ function immediateCall(func, callback) {
 const resolvedPromise = Promise.resolve();
 
 function promiseCall(func, callback) {
-  resolvedPromise.then(function() {
+  return resolvedPromise.then(function() {
     func();
     if (callback) callback();
   });
