@@ -203,7 +203,7 @@ function emitMount(component) {
 }
 
 function createDom(vDom, parent) {
-  addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
+  if (parent) addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
 
   if (!vDom) {
     return document.createComment('');
@@ -249,7 +249,7 @@ function createDom(vDom, parent) {
         let childDom = createDom(child, parent);
         dom.appendChild(childDom);
 
-        if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
+        if (parent && parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
           emitMount(parent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
         }
       });

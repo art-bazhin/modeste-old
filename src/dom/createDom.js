@@ -5,7 +5,7 @@ import render from '../component/render';
 import emitMount from '../component/emitMount';
 
 export default function createDom(vDom, parent) {
-  addClass(vDom, parent[m].scope);
+  if (parent) addClass(vDom, parent[m].scope);
 
   if (!vDom) {
     return document.createComment('');
@@ -51,7 +51,7 @@ export default function createDom(vDom, parent) {
         let childDom = createDom(child, parent);
         dom.appendChild(childDom);
 
-        if (parent[m].mounted && childDom[m] && childDom[m].id) {
+        if (parent && parent[m].mounted && childDom[m] && childDom[m].id) {
           emitMount(parent[m].children[childDom[m].id]);
         }
       });
