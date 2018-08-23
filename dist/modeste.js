@@ -84,8 +84,8 @@ function addStyles(style, scope) {
   let styleElement = document.createElement('style');
 
   if (scope) {
-    let regex = /:\$/gm;
-    let repl = '.' + scope;
+    let regex = /:scoped([^\w\d])/gm;
+    let repl = '.' + scope + '$1';
 
     styleElement.textContent = style.replace(regex, repl);
   } else {
