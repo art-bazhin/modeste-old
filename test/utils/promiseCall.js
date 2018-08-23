@@ -1,16 +1,16 @@
 /* globals test expect */
 'use strict';
 
-import asyncCall from '../../src/utils/asyncCall';
+import promiseCall from '../../src/utils/promiseCall';
 
-test('Async calling function with callback', () => {
+test('Async calling function (Promise realization)', () => {
   let string = 'waiting';
 
   function func() {
     string = 'done';
   }
 
-  asyncCall(func, function() {
+  promiseCall(func, function() {
     expect(string).toBe('done');
   });
 

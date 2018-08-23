@@ -1,15 +1,11 @@
-let asyncCall, resolvedPromise;
+import immediateCall from './immediateCall';
+import promiseCall from './promiseCall';
+import timeoutCall from './timeoutCall';
 
-if (window.setImmediate) asyncCall = window.setImmediate;
-else if (window.Promise) {
-  resolvedPromise = Promise.resolve();
-  asyncCall = function(func) {
-    resolvedPromise.then(func);
-  };
-} else {
-  asyncCall = function(func) {
-    setTimeout(func, 0);
-  };
-}
+let asyncCall;
+
+if (window.setImmediate) asyncCall = immediateCall;
+else if (window.Promise) asyncCall = promiseCall;
+else asyncCall = timeoutCall;
 
 export default asyncCall;

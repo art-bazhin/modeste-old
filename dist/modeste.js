@@ -515,20 +515,34 @@ function render(component) {
   } else emitHook(component, 'didUpdate');
 }
 
-let asyncCall;
-let resolvedPromise;
-
-if (window.setImmediate) asyncCall = window.setImmediate;
-else if (window.Promise) {
-  resolvedPromise = Promise.resolve();
-  asyncCall = function(func) {
-    resolvedPromise.then(func);
-  };
-} else {
-  asyncCall = function(func) {
-    setTimeout(func, 0);
-  };
+function immediateCall(func, callback) {
+  window.setImmediate(function() {
+    func();
+    if (callback) callback();
+  });
 }
+
+const resolvedPromise = Promise.resolve();
+
+function promiseCall(func, callback) {
+  resolvedPromise.then(function() {
+    func();
+    if (callback) callback();
+  });
+}
+
+function timeoutCall(func, callback) {
+  setTimeout(function() {
+    func();
+    if (callback) callback();
+  }, 0);
+}
+
+let asyncCall;
+
+if (window.setImmediate) asyncCall = immediateCall;
+else if (window.Promise) asyncCall = promiseCall;
+else asyncCall = timeoutCall;
 
 var asyncCall$1 = asyncCall;
 
