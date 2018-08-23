@@ -5,12 +5,8 @@ const COMMENT_NODE = window.Node.COMMENT_NODE;
 const ELEMENT_NODE = window.Node.ELEMENT_NODE;
 const TEXT_NODE = window.Node.TEXT_NODE;
 
-function strictEqual(a, b) {
-  return a === b;
-}
-
 function shouldUpdateData(oldValue, newValue) {
-  return !strictEqual(oldValue, newValue);
+  return oldValue !== newValue;
 }
 
 function shallowCompare(a, b) {
@@ -24,7 +20,7 @@ function shallowCompare(a, b) {
     let index = bKeys.indexOf(key);
 
     if (index < 0) return false;
-    if (!strictEqual(a[key], b[key])) return false;
+    if (a[key] !== b[key]) return false;
   }
 
   return true;

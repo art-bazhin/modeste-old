@@ -1,5 +1,3 @@
-import strictEqual from './strictEqual';
-
 export default function shallowCompare(a, b) {
   let aKeys = Object.keys(a);
   let bKeys = Object.keys(b);
@@ -11,7 +9,7 @@ export default function shallowCompare(a, b) {
     let index = bKeys.indexOf(key);
 
     if (index < 0) return false;
-    if (!strictEqual(a[key], b[key])) return false;
+    if (a[key] !== b[key]) return false;
   }
 
   return true;
