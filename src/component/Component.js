@@ -6,21 +6,28 @@ import emitHook from './emitHook';
 import registerComponent from './registerComponent';
 import render from './render';
 import asyncRender from './asyncRender';
+import generateId from '../utils/generateId';
+import assign from '../utils/assign';
 
 export default class Component {
   constructor(opts, parent) {
+    let id = generateId();
+
     this[m] = {};
+    registerHooks(this, opts.manifest);
+    emitHook(this, 'willCreate');
 
-    if (!opts.manifest.factories) opts.manifest.factories = {};
+    this[m].id = id;
+    if (parent) parent[m].children[id] = this;
 
-    this[m].factories = opts.manifest.factories;
+    this[m].name = opts.name;
+    this[m].factories = opts.manifest.factories ? opts.manifest.factories : {};
     this[m].parent = parent;
     this[m].app = parent ? parent[m].app : this;
-    this[m].name = opts.name;
-    this[m].id = opts.id;
     this[m].scope = opts.scope;
     this[m].children = {};
     this[m].props = opts.props ? opts.props : {};
+    this[m].defaultProps = opts.defaultProps;
     this[m].subscribers = {};
 
     this[m].subscriptions = opts.manifest.subscriptions
@@ -34,9 +41,6 @@ export default class Component {
     this[m].shouldUpdateData = shouldUpdateData;
     this[m].shouldUpdateProps = shouldUpdateProps;
 
-    registerHooks(this, opts.manifest);
-    emitHook(this, 'willCreate');
-
     this[m].subscriptions.forEach(item => {
       let store = item.store;
       item.fields.forEach(field => {
@@ -45,8 +49,21 @@ export default class Component {
       });
     });
 
+    if (opts.manifest.props) {
+      opts.manifest.props.forEach(prop => {
+        Object.defineProperty(this, prop, {
+          enumerable: true,
+          get: function() {
+            return this[m].props[prop]
+              ? this[m].props[prop]
+              : this[m].defaultProps[prop];
+          }
+        });
+      });
+    }
+
     if (opts.manifest.data) {
-      this[m].data = opts.manifest.data();
+      this[m].data = opts.manifest.data.bind(this)();
 
       Object.keys(this[m].data).forEach(prop => {
         this[m].subscribers[prop] = {};
@@ -87,11 +104,17 @@ export default class Component {
   }
 
   get $data() {
-    return this[m].data;
+    return assign({}, this[m].data);
+  }
+
+  set $data(data) {
+    Object.keys(data).forEach(key => {
+      if (this[m].data !== undefined) this[key] = data[key];
+    });
   }
 
   get $props() {
-    return this[m].props;
+    return assign({}, this[m].props);
   }
 
   get $app() {

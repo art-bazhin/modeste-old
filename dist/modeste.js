@@ -99,24 +99,16 @@ function registerComponent(parent, name, manifest) {
 
     if (manifest.style) addStyles(manifest.style(), scope);
 
-    parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) => {
-      let id = generateId();
-
-      let component = new Component(
+    parent[INTERNAL_VAR_NAME].factories[name] = (props, parent) =>
+      new Component(
         {
           name,
           manifest,
           scope,
-          id,
           props
         },
         parent
       );
-
-      parent[INTERNAL_VAR_NAME].children[id] = component;
-
-      return component;
-    };
   }
 }
 
@@ -566,20 +558,34 @@ function asyncRender(component, callback) {
   if (renderQueue.length === 1) asyncCall$1(flushRender, callback);
 }
 
+function assign() {
+  for (let i = 1; i < arguments.length; i++) {
+    Object.keys(arguments[i]).forEach(key => {
+      arguments[0][key] = arguments[i][key];
+    });
+  }
+  return arguments[0];
+}
+
 class Component {
   constructor(opts, parent) {
+    let id = generateId();
+
     this[INTERNAL_VAR_NAME] = {};
+    registerHooks(this, opts.manifest);
+    emitHook(this, 'willCreate');
 
-    if (!opts.manifest.factories) opts.manifest.factories = {};
+    this[INTERNAL_VAR_NAME].id = id;
+    if (parent) parent[INTERNAL_VAR_NAME].children[id] = this;
 
-    this[INTERNAL_VAR_NAME].factories = opts.manifest.factories;
+    this[INTERNAL_VAR_NAME].name = opts.name;
+    this[INTERNAL_VAR_NAME].factories = opts.manifest.factories ? opts.manifest.factories : {};
     this[INTERNAL_VAR_NAME].parent = parent;
     this[INTERNAL_VAR_NAME].app = parent ? parent[INTERNAL_VAR_NAME].app : this;
-    this[INTERNAL_VAR_NAME].name = opts.name;
-    this[INTERNAL_VAR_NAME].id = opts.id;
     this[INTERNAL_VAR_NAME].scope = opts.scope;
     this[INTERNAL_VAR_NAME].children = {};
     this[INTERNAL_VAR_NAME].props = opts.props ? opts.props : {};
+    this[INTERNAL_VAR_NAME].defaultProps = opts.defaultProps;
     this[INTERNAL_VAR_NAME].subscribers = {};
 
     this[INTERNAL_VAR_NAME].subscriptions = opts.manifest.subscriptions
@@ -593,9 +599,6 @@ class Component {
     this[INTERNAL_VAR_NAME].shouldUpdateData = shouldUpdateData;
     this[INTERNAL_VAR_NAME].shouldUpdateProps = shouldUpdateProps;
 
-    registerHooks(this, opts.manifest);
-    emitHook(this, 'willCreate');
-
     this[INTERNAL_VAR_NAME].subscriptions.forEach(item => {
       let store = item.store;
       item.fields.forEach(field => {
@@ -604,8 +607,21 @@ class Component {
       });
     });
 
+    if (opts.manifest.props) {
+      opts.manifest.props.forEach(prop => {
+        Object.defineProperty(this, prop, {
+          enumerable: true,
+          get: function() {
+            return this[INTERNAL_VAR_NAME].props[prop]
+              ? this[INTERNAL_VAR_NAME].props[prop]
+              : this[INTERNAL_VAR_NAME].defaultProps[prop];
+          }
+        });
+      });
+    }
+
     if (opts.manifest.data) {
-      this[INTERNAL_VAR_NAME].data = opts.manifest.data();
+      this[INTERNAL_VAR_NAME].data = opts.manifest.data.bind(this)();
 
       Object.keys(this[INTERNAL_VAR_NAME].data).forEach(prop => {
         this[INTERNAL_VAR_NAME].subscribers[prop] = {};
@@ -646,11 +662,17 @@ class Component {
   }
 
   get $data() {
-    return this[INTERNAL_VAR_NAME].data;
+    return assign({}, this[INTERNAL_VAR_NAME].data);
+  }
+
+  set $data(data) {
+    Object.keys(data).forEach(key => {
+      if (this[INTERNAL_VAR_NAME].data !== undefined) this[key] = data[key];
+    });
   }
 
   get $props() {
-    return this[INTERNAL_VAR_NAME].props;
+    return assign({}, this[INTERNAL_VAR_NAME].props);
   }
 
   get $app() {
@@ -672,7 +694,6 @@ class Modeste extends Component {
   constructor(manifest, props) {
     super({
       name: ROOT_NAME,
-      id: generateId(),
       manifest,
       props,
       scope

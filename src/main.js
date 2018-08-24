@@ -12,7 +12,6 @@ export default class Modeste extends Component {
   constructor(manifest, props) {
     super({
       name: ROOT_NAME,
-      id: generateId(),
       manifest,
       props,
       scope

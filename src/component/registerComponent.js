@@ -1,7 +1,6 @@
 import { INTERNAL_VAR_NAME as m } from '../constants';
 import Component from './Component';
 import generateScope from './generateScope';
-import generateId from '../utils/generateId';
 import addStyles from '../dom/addStyles';
 
 export default function registerComponent(parent, name, manifest) {
@@ -10,23 +9,15 @@ export default function registerComponent(parent, name, manifest) {
 
     if (manifest.style) addStyles(manifest.style(), scope);
 
-    parent[m].factories[name] = (props, parent) => {
-      let id = generateId();
-
-      let component = new Component(
+    parent[m].factories[name] = (props, parent) =>
+      new Component(
         {
           name,
           manifest,
           scope,
-          id,
           props
         },
         parent
       );
-
-      parent[m].children[id] = component;
-
-      return component;
-    };
   }
 }
