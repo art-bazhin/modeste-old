@@ -265,9 +265,22 @@ function sameTypeAndTag(dom, vDom) {
   return false;
 }
 
+function assign() {
+  for (let i = 1; i < arguments.length; i++) {
+    Object.keys(arguments[i]).forEach(key => {
+      arguments[0][key] = arguments[i][key];
+    });
+  }
+  return arguments[0];
+}
+
 function setProps(component, props) {
-  if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component[INTERNAL_VAR_NAME].props, props)) {
-    component[INTERNAL_VAR_NAME].props = props;
+  let newProps = component[INTERNAL_VAR_NAME].defaultProps
+    ? assign({}, component[INTERNAL_VAR_NAME].defaultProps, props)
+    : props;
+
+  if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component[INTERNAL_VAR_NAME].props, newProps)) {
+    component[INTERNAL_VAR_NAME].props = newProps;
     render(component);
   }
 }
@@ -558,15 +571,6 @@ function asyncRender(component, callback) {
   if (renderQueue.length === 1) asyncCall$1(flushRender, callback);
 }
 
-function assign() {
-  for (let i = 1; i < arguments.length; i++) {
-    Object.keys(arguments[i]).forEach(key => {
-      arguments[0][key] = arguments[i][key];
-    });
-  }
-  return arguments[0];
-}
-
 class Component {
   constructor(opts, parent) {
     let id = generateId();
@@ -585,7 +589,11 @@ class Component {
     this[INTERNAL_VAR_NAME].scope = opts.scope;
     this[INTERNAL_VAR_NAME].children = {};
     this[INTERNAL_VAR_NAME].props = opts.props ? opts.props : {};
-    this[INTERNAL_VAR_NAME].defaultProps = opts.defaultProps;
+    this[INTERNAL_VAR_NAME].defaultProps = opts.manifest.defaultProps;
+
+    if (this[INTERNAL_VAR_NAME].defaultProps)
+      this.props = assign({}, this[INTERNAL_VAR_NAME].defaultProps, this[INTERNAL_VAR_NAME].props);
+
     this[INTERNAL_VAR_NAME].subscribers = {};
 
     this[INTERNAL_VAR_NAME].subscriptions = opts.manifest.subscriptions
@@ -603,7 +611,7 @@ class Component {
       let store = item.store;
       item.fields.forEach(field => {
         if (store[INTERNAL_VAR_NAME].data.hasOwnProperty(field))
-          store[INTERNAL_VAR_NAME].subscribers[field][opts.id] = this;
+          store[INTERNAL_VAR_NAME].subscribers[field][id] = this;
       });
     });
 
@@ -612,7 +620,8 @@ class Component {
         Object.defineProperty(this, prop, {
           enumerable: true,
           get: function() {
-            return this[INTERNAL_VAR_NAME].props[prop]
+            return this[INTERNAL_VAR_NAME].props[prop] !== undefined &&
+              this[INTERNAL_VAR_NAME].props[prop] !== null
               ? this[INTERNAL_VAR_NAME].props[prop]
               : this[INTERNAL_VAR_NAME].defaultProps[prop];
           }
@@ -722,8 +731,10 @@ class Modeste extends Component {
     super.$render();
 
     if (!this[INTERNAL_VAR_NAME].render) return;
-    if (!this[INTERNAL_VAR_NAME].mounted && !this[INTERNAL_VAR_NAME].wrap) return emitMount(this);
-    if (this[INTERNAL_VAR_NAME].wrap) {
+
+    if (!this[INTERNAL_VAR_NAME].mounted) {
+      if (!this[INTERNAL_VAR_NAME].wrap) return emitMount(this);
+
       while (this[INTERNAL_VAR_NAME].wrap.firstChild)
         this[INTERNAL_VAR_NAME].wrap.removeChild(this[INTERNAL_VAR_NAME].wrap.firstChild);
 

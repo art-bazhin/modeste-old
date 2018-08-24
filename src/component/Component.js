@@ -27,7 +27,11 @@ export default class Component {
     this[m].scope = opts.scope;
     this[m].children = {};
     this[m].props = opts.props ? opts.props : {};
-    this[m].defaultProps = opts.defaultProps;
+    this[m].defaultProps = opts.manifest.defaultProps;
+
+    if (this[m].defaultProps)
+      this.props = assign({}, this[m].defaultProps, this[m].props);
+
     this[m].subscribers = {};
 
     this[m].subscriptions = opts.manifest.subscriptions
@@ -45,7 +49,7 @@ export default class Component {
       let store = item.store;
       item.fields.forEach(field => {
         if (store[m].data.hasOwnProperty(field))
-          store[m].subscribers[field][opts.id] = this;
+          store[m].subscribers[field][id] = this;
       });
     });
 
@@ -54,7 +58,8 @@ export default class Component {
         Object.defineProperty(this, prop, {
           enumerable: true,
           get: function() {
-            return this[m].props[prop]
+            return this[m].props[prop] !== undefined &&
+              this[m].props[prop] !== null
               ? this[m].props[prop]
               : this[m].defaultProps[prop];
           }

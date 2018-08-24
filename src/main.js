@@ -4,7 +4,6 @@ import generateScope from './component/generateScope';
 import addStyles from './dom/addStyles';
 import emitMount from './component/emitMount';
 import setProps from './component/setProps';
-import generateId from './utils/generateId';
 
 let scope = generateScope(ROOT_NAME);
 
@@ -40,8 +39,10 @@ export default class Modeste extends Component {
     super.$render();
 
     if (!this[m].render) return;
-    if (!this[m].mounted && !this[m].wrap) return emitMount(this);
-    if (this[m].wrap) {
+
+    if (!this[m].mounted) {
+      if (!this[m].wrap) return emitMount(this);
+
       while (this[m].wrap.firstChild)
         this[m].wrap.removeChild(this[m].wrap.firstChild);
 
