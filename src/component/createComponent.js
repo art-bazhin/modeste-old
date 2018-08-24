@@ -5,5 +5,5 @@ export default function createComponent(name, props, parent) {
     return parent[m].factories[name](props, parent);
   }
 
-  return parent[m].app.factories[name](props, parent);
+  return parent[m].app[m].factories[name](props, parent);
 }
