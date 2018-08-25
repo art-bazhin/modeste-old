@@ -2,7 +2,7 @@
 
 'use strict';
 
-import t from '../../src/vDom/createTagNode';
+import e from '../../src/vDom/createTagNode';
 import createDom from '../../src/dom/createDom';
 
 function html(string) {

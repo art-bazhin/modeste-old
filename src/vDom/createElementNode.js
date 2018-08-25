@@ -1,6 +1,6 @@
 import toKebabCase from '../utils/toKebabCase';
 
-export default function createTagNode(tag, opts, children) {
+export default function createElementNode(tag, opts, children) {
   let props = {};
   let attrs = {};
 

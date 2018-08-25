@@ -1,6 +1,6 @@
 /* globals test expect */
 
-import t from '../../src/vDom/createTagNode';
+import e from '../../src/vDom/createTagNode';
 
 test('Creating a tag vNode with a right tag name', () => {
   let testNode;

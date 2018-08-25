@@ -1,6 +1,6 @@
 import { INTERNAL_VAR_NAME as m } from '../constants';
 import emitHook from './emitHook';
-import t from '../vDom/createTagNode';
+import e from '../vDom/createElementNode';
 import c from '../vDom/createComponentNode';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
@@ -11,7 +11,7 @@ export default function render(component) {
     if (!component[m].mounted) emitHook(component, 'willMount');
     else emitHook(component, 'willUpdate');
 
-    let vDom = component[m].render(t, c, component[m].props);
+    let vDom = component[m].render(e, c);
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
       throw new ModesteError(

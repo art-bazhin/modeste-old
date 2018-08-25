@@ -118,7 +118,7 @@ function toKebabCase(str) {
   return kebab;
 }
 
-function createTagNode(tag, opts, children) {
+function createElementNode(tag, opts, children) {
   let props = {};
   let attrs = {};
 
@@ -498,7 +498,7 @@ function render(component) {
     if (!component[INTERNAL_VAR_NAME].mounted) emitHook(component, 'willMount');
     else emitHook(component, 'willUpdate');
 
-    let vDom = component[INTERNAL_VAR_NAME].render(createTagNode, createComponentNode, component[INTERNAL_VAR_NAME].props);
+    let vDom = component[INTERNAL_VAR_NAME].render(createElementNode, createComponentNode);
 
     if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
       throw new ModesteError(
