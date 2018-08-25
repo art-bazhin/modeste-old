@@ -20,7 +20,10 @@ export default function updateComponentDom(dom, vDom, parent) {
       else if (component[m].dom[m].key) delete component[m].dom[m].key;
 
       return;
-    } else removeComponent(parent[m].children[id]);
+    } else {
+      console.log(component[m].name, vDom.component);
+      removeComponent(parent[m].children[id]);
+    }
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);

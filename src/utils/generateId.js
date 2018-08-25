@@ -1,4 +1,4 @@
-const ID_RND_LENGTH = 6;
+const ID_RND_LENGTH = 8;
 let idCounter = 0;
 
 export default function generateId(middleware) {
