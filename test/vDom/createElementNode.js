@@ -1,24 +1,24 @@
 /* globals test expect */
 
-import e from '../../src/vDom/createTagNode';
+import e from '../../src/vDom/createElementNode';
 
 test('Creating a tag vNode with a right tag name', () => {
   let testNode;
 
-  testNode = t('div');
+  testNode = e('div');
   expect(testNode.tag).toBe('div');
 
-  testNode = t('span');
+  testNode = e('span');
   expect(testNode.tag).toBe('span');
 
-  testNode = t('p');
+  testNode = e('p');
   expect(testNode.tag).toBe('p');
 });
 
 test('Creating a tag vNode with a right props, attrs and utility fields', () => {
   let testNode;
 
-  testNode = t('div', {
+  testNode = e('div', {
     className: 'test class names',
     value: 'test',
     _dataSomeAttr: 'someValue',
@@ -46,31 +46,31 @@ test('Creating a tag vNode with a right props, attrs and utility fields', () => 
 test('Creating a tag vNode with a right children', () => {
   let testNode;
 
-  testNode = t('div');
+  testNode = e('div');
   expect(testNode.children).toEqual([]);
 
-  testNode = t('div', [
+  testNode = e('div', [
     'test',
-    t('div', { className: 'test-class' }, ['nested']),
+    e('div', { className: 'test-class' }, ['nested']),
     null,
     'another-test'
   ]);
   expect(testNode.children).toEqual([
     'test',
-    t('div', { className: 'test-class' }, ['nested']),
+    e('div', { className: 'test-class' }, ['nested']),
     null,
     'another-test'
   ]);
 
-  testNode = t('div', { value: 'test' }, [
+  testNode = e('div', { value: 'test' }, [
     'test',
-    t('div', { className: 'test-class' }, ['nested']),
+    e('div', { className: 'test-class' }, ['nested']),
     null,
     'another-test'
   ]);
   expect(testNode.children).toEqual([
     'test',
-    t('div', { className: 'test-class' }, ['nested']),
+    e('div', { className: 'test-class' }, ['nested']),
     null,
     'another-test'
   ]);

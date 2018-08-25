@@ -2,7 +2,7 @@
 
 'use strict';
 
-import e from '../../src/vDom/createTagNode';
+import e from '../../src/vDom/createElementNode';
 import createDom from '../../src/dom/createDom';
 
 function html(string) {
@@ -30,9 +30,9 @@ test('Creating element node', () => {
     </div>
   `);
 
-  let vNode = t('div', { value: 'test', _dataAttr: 'some value' }, [
-    t('p', ['Some text content']),
-    t('div', { _class: 'test' }, [t('span', ['hello']), t('span', ['world'])])
+  let vNode = e('div', { value: 'test', _dataAttr: 'some value' }, [
+    e('p', ['Some text content']),
+    e('div', { _class: 'test' }, [e('span', ['hello']), e('span', ['world'])])
   ]);
 
   let node = createDom(vNode);
