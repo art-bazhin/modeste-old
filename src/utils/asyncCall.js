@@ -2,10 +2,10 @@ import immediateCall from './immediateCall';
 import promiseCall from './promiseCall';
 import timeoutCall from './timeoutCall';
 
-let asyncCall;
+export function chooseAsyncFunc() {
+  if (window.setImmediate) return immediateCall;
+  else if (window.Promise) return promiseCall;
+  else return timeoutCall;
+}
 
-if (window.setImmediate) asyncCall = immediateCall;
-else if (window.Promise) asyncCall = promiseCall;
-else asyncCall = timeoutCall;
-
-export default asyncCall;
+export default chooseAsyncFunc();

@@ -3,6 +3,6 @@ export default class ModesteError extends Error {
     super(...args);
     this.name = 'MODESTE Error';
     this.message = '[MODESTE ERROR] ' + this.message;
-    Error.captureStackTrace(this, modesteError);
+    Error.captureStackTrace(this, ModesteError);
   }
 }
