@@ -486,7 +486,7 @@ class ModesteError extends Error {
     super(...args);
     this.name = 'MODESTE Error';
     this.message = '[MODESTE ERROR] ' + this.message;
-    Error.captureStackTrace(this, modesteError);
+    Error.captureStackTrace(this, ModesteError);
   }
 }
 
@@ -538,13 +538,13 @@ function timeoutCall(func, callback) {
   }, 0);
 }
 
-let asyncCall;
+function chooseAsyncFunc() {
+  if (window.setImmediate) return immediateCall;
+  else if (window.Promise) return promiseCall;
+  else return timeoutCall;
+}
 
-if (window.setImmediate) asyncCall = immediateCall;
-else if (window.Promise) asyncCall = promiseCall;
-else asyncCall = timeoutCall;
-
-var asyncCall$1 = asyncCall;
+var asyncCall = chooseAsyncFunc();
 
 let renderQueue = [];
 let rendered = {};
@@ -563,12 +563,18 @@ function flushRender() {
 
 function asyncRender(component, callback) {
   renderQueue.push(component);
-  if (renderQueue.length === 1) asyncCall$1(flushRender, callback);
+  if (renderQueue.length === 1) asyncCall(flushRender, callback);
 }
 
 class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
+    let scope =
+      manifest.scope === false
+        ? false
+        : manifest[INTERNAL_VAR_NAME]
+          ? manifest[INTERNAL_VAR_NAME].scope
+          : getScope(generateId());
 
     this[INTERNAL_VAR_NAME] = {};
     registerHooks(this, manifest);
@@ -581,7 +587,7 @@ class Component {
     this[INTERNAL_VAR_NAME].factories = {};
     this[INTERNAL_VAR_NAME].parent = parent;
     this[INTERNAL_VAR_NAME].app = parent ? parent[INTERNAL_VAR_NAME].app : this;
-    this[INTERNAL_VAR_NAME].scope = manifest[INTERNAL_VAR_NAME] ? manifest[INTERNAL_VAR_NAME].scope : getScope(generateId());
+    this[INTERNAL_VAR_NAME].scope = scope;
     this[INTERNAL_VAR_NAME].children = {};
     this[INTERNAL_VAR_NAME].props = props ? props : {};
     this[INTERNAL_VAR_NAME].defaultProps = manifest.defaultProps;
