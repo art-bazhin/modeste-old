@@ -22,6 +22,8 @@ export default function render(component) {
     if (!component[m].dom) {
       component[m].dom = createDom(vDom, component);
     } else {
+      let key = component[m].dom[m].key;
+      if (key !== undefined) vDom.key = key;
       updateDom(component[m].dom, vDom, component);
     }
 

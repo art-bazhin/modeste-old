@@ -6,28 +6,28 @@ import createDom from './createDom';
 import removeComponent from '../component/removeComponent';
 import emitMount from '../component/emitMount';
 
-export default function updateDom(dom, vDom, parent) {
+export default function updateDom(dom, vDom, parentComponent) {
   if (vDom && vDom.component) {
-    updateComponentDom(dom, vDom, parent);
+    updateComponentDom(dom, vDom, parentComponent);
     return;
   }
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[m] && dom[m].id) {
-      removeComponent(parent[m].children[dom[m].id]);
+      removeComponent(parentComponent[m].children[dom[m].id]);
     }
 
-    let newDom = createDom(vDom, parent);
+    let newDom = createDom(vDom, parentComponent);
     dom.parentNode.replaceChild(newDom, dom);
 
-    if (parent && parent[m].dom === dom) {
-      parent[m].dom = newDom;
+    if (parentComponent && parentComponent[m].dom === dom) {
+      parentComponent[m].dom = newDom;
     }
 
     return;
   }
 
-  if (parent) addClass(vDom, parent[m].scope);
+  if (parentComponent) addClass(vDom, parentComponent[m].scope);
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
@@ -94,7 +94,7 @@ export default function updateDom(dom, vDom, parent) {
       });
 
       // Process child nodes
-      let keyed = vDom.children[0] && vDom.children[0].key;
+      let keyed = vDom.children[0] && vDom.children[0].key !== undefined;
 
       if (keyed) {
         let nodes = {};
@@ -111,20 +111,17 @@ export default function updateDom(dom, vDom, parent) {
         vDom.children.forEach(child => {
           if (nodes[child.key]) {
             dom.appendChild(nodes[child.key]);
-            updateDom(nodes[child.key], child, parent);
-          } else dom.appendChild(createDom(child, parent));
+            updateDom(nodes[child.key], child, parentComponent);
+          } else {
+            appendNewDomAndMount(child, dom, parentComponent);
+          }
         });
       } else {
         vDom.children.forEach((child, index) => {
           if (!dom.childNodes[index]) {
-            let childDom = createDom(child, parent);
-            dom.appendChild(childDom);
-
-            if (parent && parent[m].mounted && childDom[m] && childDom[m].id) {
-              emitMount(parent[m].children[childDom[m].id]);
-            }
+            appendNewDomAndMount(child, dom, parentComponent);
           } else {
-            updateDom(dom.childNodes[index], child, parent);
+            updateDom(dom.childNodes[index], child, parentComponent);
           }
         });
 
@@ -148,5 +145,19 @@ export default function updateDom(dom, vDom, parent) {
         dom.nodeValue = vDom;
       }
       break;
+  }
+}
+
+function appendNewDomAndMount(vDom, parentDom, parentComponent) {
+  let childDom = createDom(vDom, parentComponent);
+  parentDom.appendChild(childDom);
+
+  if (
+    parentComponent &&
+    parentComponent[m].mounted &&
+    childDom[m] &&
+    childDom[m].id
+  ) {
+    emitMount(parentComponent[m].children[childDom[m].id]);
   }
 }

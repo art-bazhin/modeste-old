@@ -205,7 +205,9 @@ function createDom(vDom, parent) {
 
         render(component);
 
-        if (vDom.key) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
+        if (vDom.key !== undefined) {
+          component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
+        }
         return component[INTERNAL_VAR_NAME].dom;
       }
 
@@ -239,7 +241,7 @@ function createDom(vDom, parent) {
       });
 
       if (vDom.ref) vDom.ref(dom);
-      if (vDom.key) dom[INTERNAL_VAR_NAME].key = vDom.key;
+      if (vDom.key !== undefined) dom[INTERNAL_VAR_NAME].key = vDom.key;
 
       return dom;
   }
@@ -313,12 +315,8 @@ function updateComponentDom(dom, vDom, parent) {
 
       if (vDom.ref) vDom.ref(component);
 
-      if (vDom.key) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
-      else if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key) delete component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
-
       return;
     } else {
-      console.log(component[INTERNAL_VAR_NAME].name, vDom.component);
       removeComponent(parent[INTERNAL_VAR_NAME].children[id]);
     }
   }
@@ -330,34 +328,35 @@ function updateComponentDom(dom, vDom, parent) {
 
   render(component);
 
-  if (vDom.key) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
-  else if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key) delete component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
+  if (vDom.key !== undefined) component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key = vDom.key;
+  else if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key !== undefined)
+    delete component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
 
   if (parent[INTERNAL_VAR_NAME].mounted) emitMount(component);
 }
 
-function updateDom(dom, vDom, parent) {
+function updateDom(dom, vDom, parentComponent) {
   if (vDom && vDom.component) {
-    updateComponentDom(dom, vDom, parent);
+    updateComponentDom(dom, vDom, parentComponent);
     return;
   }
 
   if (!sameTypeAndTag(dom, vDom)) {
     if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
-      removeComponent(parent[INTERNAL_VAR_NAME].children[dom[INTERNAL_VAR_NAME].id]);
+      removeComponent(parentComponent[INTERNAL_VAR_NAME].children[dom[INTERNAL_VAR_NAME].id]);
     }
 
-    let newDom = createDom(vDom, parent);
+    let newDom = createDom(vDom, parentComponent);
     dom.parentNode.replaceChild(newDom, dom);
 
-    if (parent[INTERNAL_VAR_NAME].dom === dom) {
-      parent[INTERNAL_VAR_NAME].dom = newDom;
+    if (parentComponent && parentComponent[INTERNAL_VAR_NAME].dom === dom) {
+      parentComponent[INTERNAL_VAR_NAME].dom = newDom;
     }
 
     return;
   }
 
-  addClass(vDom, parent[INTERNAL_VAR_NAME].scope);
+  if (parentComponent) addClass(vDom, parentComponent[INTERNAL_VAR_NAME].scope);
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
@@ -424,7 +423,7 @@ function updateDom(dom, vDom, parent) {
       });
 
       // Process child nodes
-      let keyed = vDom.children[0] && vDom.children[0].key;
+      let keyed = vDom.children[0] && vDom.children[0].key !== undefined;
 
       if (keyed) {
         let nodes = {};
@@ -441,20 +440,17 @@ function updateDom(dom, vDom, parent) {
         vDom.children.forEach(child => {
           if (nodes[child.key]) {
             dom.appendChild(nodes[child.key]);
-            updateDom(nodes[child.key], child, parent);
-          } else dom.appendChild(createDom(child, parent));
+            updateDom(nodes[child.key], child, parentComponent);
+          } else {
+            appendNewDomAndMount(child, dom, parentComponent);
+          }
         });
       } else {
         vDom.children.forEach((child, index) => {
           if (!dom.childNodes[index]) {
-            let childDom = createDom(child, parent);
-            dom.appendChild(childDom);
-
-            if (parent[INTERNAL_VAR_NAME].mounted && childDom[INTERNAL_VAR_NAME] && childDom[INTERNAL_VAR_NAME].id) {
-              emitMount(parent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
-            }
+            appendNewDomAndMount(child, dom, parentComponent);
           } else {
-            updateDom(dom.childNodes[index], child, parent);
+            updateDom(dom.childNodes[index], child, parentComponent);
           }
         });
 
@@ -478,6 +474,20 @@ function updateDom(dom, vDom, parent) {
         dom.nodeValue = vDom;
       }
       break;
+  }
+}
+
+function appendNewDomAndMount(vDom, parentDom, parentComponent) {
+  let childDom = createDom(vDom, parentComponent);
+  parentDom.appendChild(childDom);
+
+  if (
+    parentComponent &&
+    parentComponent[INTERNAL_VAR_NAME].mounted &&
+    childDom[INTERNAL_VAR_NAME] &&
+    childDom[INTERNAL_VAR_NAME].id
+  ) {
+    emitMount(parentComponent[INTERNAL_VAR_NAME].children[childDom[INTERNAL_VAR_NAME].id]);
   }
 }
 
@@ -506,6 +516,8 @@ function render(component) {
     if (!component[INTERNAL_VAR_NAME].dom) {
       component[INTERNAL_VAR_NAME].dom = createDom(vDom, component);
     } else {
+      let key = component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
+      if (key !== undefined) vDom.key = key;
       updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component);
     }
 
