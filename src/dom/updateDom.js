@@ -20,14 +20,14 @@ export default function updateDom(dom, vDom, parent) {
     let newDom = createDom(vDom, parent);
     dom.parentNode.replaceChild(newDom, dom);
 
-    if (parent[m].dom === dom) {
+    if (parent && parent[m].dom === dom) {
       parent[m].dom = newDom;
     }
 
     return;
   }
 
-  addClass(vDom, parent[m].scope);
+  if (parent) addClass(vDom, parent[m].scope);
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
@@ -120,7 +120,7 @@ export default function updateDom(dom, vDom, parent) {
             let childDom = createDom(child, parent);
             dom.appendChild(childDom);
 
-            if (parent[m].mounted && childDom[m] && childDom[m].id) {
+            if (parent && parent[m].mounted && childDom[m] && childDom[m].id) {
               emitMount(parent[m].children[childDom[m].id]);
             }
           } else {
