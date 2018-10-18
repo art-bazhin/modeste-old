@@ -516,8 +516,10 @@ function render(component) {
     if (!component[INTERNAL_VAR_NAME].dom) {
       component[INTERNAL_VAR_NAME].dom = createDom(vDom, component);
     } else {
-      let key = component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
-      if (key !== undefined) vDom.key = key;
+      if (component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME] && component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key !== undefined) {
+        vDom.key = component[INTERNAL_VAR_NAME].dom[INTERNAL_VAR_NAME].key;
+      }
+
       updateDom(component[INTERNAL_VAR_NAME].dom, vDom, component);
     }
 
