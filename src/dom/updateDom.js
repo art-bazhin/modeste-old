@@ -5,6 +5,7 @@ import updateComponentDom from './updateComponentDom';
 import createDom from './createDom';
 import removeComponent from '../component/removeComponent';
 import emitMount from '../component/emitMount';
+import isNullOrUndefined from '../utils/isNullOrUndefined';
 
 export default function updateDom(dom, vDom, parentComponent) {
   if (vDom && vDom.component) {
@@ -30,18 +31,11 @@ export default function updateDom(dom, vDom, parentComponent) {
   switch (dom.nodeType) {
     case ELEMENT_NODE:
       // Process attrs
-      let attrs = [];
-
-      if (dom[m].attrs) {
-        Object.keys(dom[m].attrs).forEach(attr => {
-          attrs.push(attr);
-        });
-      }
-
-      if (!dom[m].attrs) dom[m].attrs = {};
+      let attrs = dom[m].attrs ? Object.keys(dom[m].attrs) : [];
+      dom[m].attrs = dom[m].attrs || {};
 
       Object.keys(vDom.attrs).forEach(attr => {
-        if (vDom.attrs[attr] === null) {
+        if (isNullOrUndefined(vDom.attrs[attr])) {
           dom.removeAttribute(attr);
           delete dom[m].attrs[attr];
         } else if (dom[m].attrs[attr] !== vDom.attrs[attr]) {
@@ -61,18 +55,11 @@ export default function updateDom(dom, vDom, parentComponent) {
       });
 
       // Process props
-      let props = [];
-
-      if (dom[m].props) {
-        Object.keys(dom[m].props).forEach(prop => {
-          props.push(prop);
-        });
-      }
-
-      if (!dom[m].props) dom[m].props = {};
+      let props = dom[m].props ? Object.keys(dom[m].props) : [];
+      dom[m].props = dom[m].props || {};
 
       Object.keys(vDom.props).forEach(prop => {
-        if (vDom.props[prop] === null) {
+        if (isNullOrUndefined(vDom.props[prop])) {
           dom[prop] = null;
           delete dom[m].props[prop];
         } else if (dom[m].props[prop] !== vDom.props[prop]) {
