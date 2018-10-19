@@ -9,6 +9,7 @@ import asyncRender from './asyncRender';
 import generateId from '../utils/generateId';
 import assign from '../utils/assign';
 import getScope from './getScope';
+import validateProps from './validateProps';
 
 export default class Component {
   constructor(manifest, name, props, parent) {
@@ -32,11 +33,6 @@ export default class Component {
     this[m].app = parent ? parent[m].app : this;
     this[m].scope = scope;
     this[m].children = {};
-    this[m].props = props ? props : {};
-    this[m].defaultProps = manifest.defaultProps;
-
-    if (this[m].defaultProps)
-      this[m].props = assign({}, this[m].defaultProps, this[m].props);
 
     this[m].subscribers = {};
 
@@ -58,14 +54,19 @@ export default class Component {
     });
 
     if (manifest.props) {
-      manifest.props.forEach(prop => {
+      this[m].props = props ? props : {};
+      this[m].defaultProps = manifest.defaultProps;
+
+      if (this[m].defaultProps)
+        this[m].props = assign({}, this[m].defaultProps, this[m].props);
+
+      validateProps(this[m].props, manifest.props, this);
+
+      Object.keys(manifest.props).forEach(prop => {
         Object.defineProperty(this, prop, {
           enumerable: true,
           get: function() {
-            return this[m].props[prop] !== undefined &&
-              this[m].props[prop] !== null
-              ? this[m].props[prop]
-              : this[m].defaultProps[prop];
+            return this[m].props[prop];
           }
         });
       });

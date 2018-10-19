@@ -139,7 +139,9 @@ test('Creating nested component nodes', () => {
   let nested = {
     scoped: false,
 
-    props: ['text'],
+    props: {
+      text: false
+    },
 
     render(e) {
       return e('span', [this.text]);
@@ -204,7 +206,9 @@ test('Creating nested component nodes with key and ref options', () => {
   let nested = {
     scoped: false,
 
-    props: ['text'],
+    props: {
+      text: false
+    },
 
     render(e) {
       return e('span', { $ref: r => (nestedRef = r) }, [this.text]);

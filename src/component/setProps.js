@@ -3,6 +3,10 @@ import render from './render';
 import assign from '../utils/assign';
 
 export default function setProps(component, props) {
+  Object.keys(props).forEach(key => {
+    if (props[key] === undefined || props[key] === null) delete props[key];
+  });
+
   let newProps = component[m].defaultProps
     ? assign({}, component[m].defaultProps, props)
     : props;
