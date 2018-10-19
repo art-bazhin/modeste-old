@@ -269,6 +269,10 @@ function assign() {
 }
 
 function setProps(component, props) {
+  Object.keys(props).forEach(key => {
+    if (props[key] === undefined || props[key] === null) delete props[key];
+  });
+
   let newProps = component[INTERNAL_VAR_NAME].defaultProps
     ? assign({}, component[INTERNAL_VAR_NAME].defaultProps, props)
     : props;
@@ -322,7 +326,6 @@ function updateComponentDom(dom, vDom, parent) {
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);
-
   component[INTERNAL_VAR_NAME].dom = dom;
 
   if (vDom.ref) vDom.ref(component);
@@ -581,6 +584,31 @@ function asyncRender(component, callback) {
   if (renderQueue.length === 1) asyncCall(flushRender, callback);
 }
 
+function validateProps(props, validationObject, component) {
+  let validationKeys = Object.keys(validationObject);
+  let propKeys = Object.keys(props);
+
+  propKeys.forEach(propName => {
+    if (validationKeys.indexOf(propName) < 0) {
+      throw new ModesteError(
+        `${component[INTERNAL_VAR_NAME].name}: ${propName} is not acceptable component property`
+      );
+    }
+  });
+
+  validationKeys.forEach(propName => {
+    if (validationKeys[propName] && propKeys.indexOf(propName) < 0) {
+      throw new ModesteError(
+        `${
+          component[INTERNAL_VAR_NAME].name
+        }: ${propName} is required property of the component`
+      );
+    }
+  });
+
+  return true;
+}
+
 class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
@@ -603,11 +631,7 @@ class Component {
     this[INTERNAL_VAR_NAME].app = parent ? parent[INTERNAL_VAR_NAME].app : this;
     this[INTERNAL_VAR_NAME].scope = scope;
     this[INTERNAL_VAR_NAME].children = {};
-    this[INTERNAL_VAR_NAME].props = props ? props : {};
-    this[INTERNAL_VAR_NAME].defaultProps = manifest.defaultProps;
-
-    if (this[INTERNAL_VAR_NAME].defaultProps)
-      this[INTERNAL_VAR_NAME].props = assign({}, this[INTERNAL_VAR_NAME].defaultProps, this[INTERNAL_VAR_NAME].props);
+    this[INTERNAL_VAR_NAME].props = {};
 
     this[INTERNAL_VAR_NAME].subscribers = {};
 
@@ -629,14 +653,19 @@ class Component {
     });
 
     if (manifest.props) {
-      manifest.props.forEach(prop => {
+      this[INTERNAL_VAR_NAME].props = props ? props : {};
+      this[INTERNAL_VAR_NAME].defaultProps = manifest.defaultProps;
+
+      if (this[INTERNAL_VAR_NAME].defaultProps)
+        this[INTERNAL_VAR_NAME].props = assign({}, this[INTERNAL_VAR_NAME].defaultProps, this[INTERNAL_VAR_NAME].props);
+
+      validateProps(this[INTERNAL_VAR_NAME].props, manifest.props, this);
+
+      Object.keys(manifest.props).forEach(prop => {
         Object.defineProperty(this, prop, {
           enumerable: true,
           get: function() {
-            return this[INTERNAL_VAR_NAME].props[prop] !== undefined &&
-              this[INTERNAL_VAR_NAME].props[prop] !== null
-              ? this[INTERNAL_VAR_NAME].props[prop]
-              : this[INTERNAL_VAR_NAME].defaultProps[prop];
+            return this[INTERNAL_VAR_NAME].props[prop];
           }
         });
       });

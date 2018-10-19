@@ -33,6 +33,7 @@ export default class Component {
     this[m].app = parent ? parent[m].app : this;
     this[m].scope = scope;
     this[m].children = {};
+    this[m].props = {};
 
     this[m].subscribers = {};
 
