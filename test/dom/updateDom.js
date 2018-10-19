@@ -5,10 +5,7 @@
 import e from '../../src/vDom/createElementNode';
 import createDom from '../../src/dom/createDom';
 import updateDom from '../../src/dom/updateDom';
-
-function html(string) {
-  return string.replace(/>[ \n]*</gm, '><').trim();
-}
+import Modeste from '../../src/main';
 
 test('Update dom node', () => {
   let vDom = e('div', [
@@ -31,7 +28,7 @@ test('Update dom node', () => {
 
   updateDom(dom, resultVDom);
 
-  expect(html(dom.outerHTML)).toBe(html(resultDom.outerHTML));
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
 });
 
 test('Update dom node with keyed array', () => {
@@ -61,7 +58,7 @@ test('Update dom node with keyed array', () => {
 
   updateDom(dom, resultVDom);
 
-  expect(html(dom.outerHTML)).toBe(html(resultDom.outerHTML));
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
 });
 
 test('Update dom node with props updates', () => {
@@ -84,7 +81,7 @@ test('Update dom node with props updates', () => {
 
   updateDom(dom, resultVDom);
 
-  expect(html(dom.outerHTML)).toBe(html(resultDom.outerHTML));
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
 });
 
 test('Update dom node with attr updates', () => {
@@ -107,7 +104,7 @@ test('Update dom node with attr updates', () => {
 
   updateDom(dom, resultVDom);
 
-  expect(html(dom.outerHTML)).toBe(html(resultDom.outerHTML));
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
 });
 
 test('Replace dom node with node of another type', () => {
@@ -133,5 +130,43 @@ test('Replace dom node with node of another type', () => {
 
   updateDom(dom, resultVDom);
 
-  expect(html(container.children[0].outerHTML)).toBe(html(resultDom.outerHTML));
+  expect(container.children[0].outerHTML).toBe(resultDom.outerHTML);
+});
+
+test('Update component dom node', () => {
+  let container = document.createElement('div');
+  container.id = 'container';
+  document.body.appendChild(container);
+
+  let component = {
+    scoped: false,
+
+    render(e) {
+      return e('div', { id: 'component' }, [e('span', ['Hello world!'])]);
+    }
+  };
+
+  new Modeste({
+    selector: '#container',
+
+    components: {
+      component
+    },
+
+    render(e, c) {
+      return e('div', { id: 'app' }, [c('component')]);
+    }
+  });
+
+  let appDom = document.getElementById('app');
+  let dom = appDom.firstChild;
+
+  let resultVDom = e('div', { id: 'component' }, [
+    e('span', ['Goodbye cruel world!'])
+  ]);
+  let resultDom = createDom(resultVDom);
+
+  updateDom(dom, resultVDom);
+
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
 });

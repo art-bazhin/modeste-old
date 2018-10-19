@@ -13,12 +13,11 @@ import getScope from './getScope';
 export default class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
-    let scope =
-      manifest.scope === false
-        ? false
-        : manifest[m]
-          ? manifest[m].scope
-          : getScope(generateId());
+    let scope = false;
+
+    if (manifest.scoped !== false) {
+      scope = manifest[m] ? manifest[m].scope : getScope(generateId());
+    }
 
     this[m] = {};
     registerHooks(this, manifest);

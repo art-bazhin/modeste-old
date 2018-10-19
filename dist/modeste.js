@@ -98,7 +98,7 @@ let factories = {};
 function registerComponent(parent, name, manifest) {
   if (!manifest[INTERNAL_VAR_NAME]) {
     let id = generateId();
-    let scope = manifest.scope !== false ? getScope(id) : false;
+    let scope = manifest.scoped !== false ? getScope(id) : false;
 
     manifest[INTERNAL_VAR_NAME] = { id, scope };
     if (manifest.style) addStyles(manifest.style(), scope);
@@ -174,8 +174,8 @@ function addClass(vDom, className) {
   vDom.attrs.class = `${vDom.attrs.class} ${className}`.trim();
 }
 
-function createComponent(name, props, parent) {
-  return parent[INTERNAL_VAR_NAME].factories[name](name, props, parent);
+function createComponent(name, props, parentComponent) {
+  return parentComponent[INTERNAL_VAR_NAME].factories[name](name, props, parentComponent);
 }
 
 function emitMount(component) {
@@ -322,6 +322,7 @@ function updateComponentDom(dom, vDom, parent) {
   }
 
   let component = createComponent(vDom.component, vDom.props, parent);
+
   component[INTERNAL_VAR_NAME].dom = dom;
 
   if (vDom.ref) vDom.ref(component);
@@ -583,12 +584,11 @@ function asyncRender(component, callback) {
 class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
-    let scope =
-      manifest.scope === false
-        ? false
-        : manifest[INTERNAL_VAR_NAME]
-          ? manifest[INTERNAL_VAR_NAME].scope
-          : getScope(generateId());
+    let scope = false;
+
+    if (manifest.scoped !== false) {
+      scope = manifest[INTERNAL_VAR_NAME] ? manifest[INTERNAL_VAR_NAME].scope : getScope(generateId());
+    }
 
     this[INTERNAL_VAR_NAME] = {};
     registerHooks(this, manifest);

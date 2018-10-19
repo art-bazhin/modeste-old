@@ -9,7 +9,7 @@ let factories = {};
 export default function registerComponent(parent, name, manifest) {
   if (!manifest[m]) {
     let id = generateId();
-    let scope = manifest.scope !== false ? getScope(id) : false;
+    let scope = manifest.scoped !== false ? getScope(id) : false;
 
     manifest[m] = { id, scope };
     if (manifest.style) addStyles(manifest.style(), scope);

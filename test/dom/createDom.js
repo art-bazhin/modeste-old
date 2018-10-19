@@ -91,7 +91,7 @@ test('Creating component node', () => {
   `);
 
   let component = {
-    scope: false,
+    scoped: false,
 
     render(e) {
       return e('div', { value: 'test', _dataAttr: 'some value' }, [
@@ -109,7 +109,7 @@ test('Creating component node', () => {
       component
     },
 
-    scope: false,
+    scoped: false,
 
     render(e) {
       return e('div');
@@ -137,7 +137,7 @@ test('Creating nested component nodes', () => {
   `);
 
   let nested = {
-    scope: false,
+    scoped: false,
 
     props: ['text'],
 
@@ -147,7 +147,7 @@ test('Creating nested component nodes', () => {
   };
 
   let component = {
-    scope: false,
+    scoped: false,
 
     components: {
       nested
@@ -169,7 +169,7 @@ test('Creating nested component nodes', () => {
       component
     },
 
-    scope: false,
+    scoped: false,
 
     render(e) {
       return e('div');
@@ -202,7 +202,7 @@ test('Creating nested component nodes with key and ref options', () => {
   `);
 
   let nested = {
-    scope: false,
+    scoped: false,
 
     props: ['text'],
 
@@ -212,7 +212,7 @@ test('Creating nested component nodes with key and ref options', () => {
   };
 
   let component = {
-    scope: false,
+    scoped: false,
 
     components: {
       nested
@@ -234,7 +234,7 @@ test('Creating nested component nodes with key and ref options', () => {
       component
     },
 
-    scope: false,
+    scoped: false,
 
     render(e, c) {
       return e('div', [c('component', { $ref: r => (ref = r) })]);
