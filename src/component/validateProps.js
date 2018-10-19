@@ -5,20 +5,18 @@ export default function validateProps(props, validationObject, component) {
   let validationKeys = Object.keys(validationObject);
   let propKeys = Object.keys(props);
 
-  propKeys.forEach(propName => {
-    if (validationKeys.indexOf(propName) < 0) {
+  propKeys.forEach(key => {
+    if (validationKeys.indexOf(key) < 0) {
       throw new ModesteError(
-        `${component[m].name}: ${propName} is not acceptable component property`
+        `${component[m].name}: ${key} is not acceptable component property`
       );
     }
   });
 
-  validationKeys.forEach(propName => {
-    if (validationKeys[propName] && propKeys.indexOf(propName) < 0) {
+  validationKeys.forEach(key => {
+    if (validationObject[key] && propKeys.indexOf(key) < 0) {
       throw new ModesteError(
-        `${
-          component[m].name
-        }: ${propName} is required property of the component`
+        `${component[m].name}: ${key} is required property of the component`
       );
     }
   });

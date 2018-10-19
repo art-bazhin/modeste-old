@@ -268,14 +268,48 @@ function assign() {
   return arguments[0];
 }
 
+class ModesteError extends Error {
+  constructor(...args) {
+    super(...args);
+    this.name = 'MODESTE Error';
+    this.message = '[MODESTE ERROR] ' + this.message;
+    Error.captureStackTrace(this, ModesteError);
+  }
+}
+
+function validateProps(props, validationObject, component) {
+  let validationKeys = Object.keys(validationObject);
+  let propKeys = Object.keys(props);
+
+  propKeys.forEach(key => {
+    if (validationKeys.indexOf(key) < 0) {
+      throw new ModesteError(
+        `${component[INTERNAL_VAR_NAME].name}: ${key} is not acceptable component property`
+      );
+    }
+  });
+
+  validationKeys.forEach(key => {
+    if (validationObject[key] && propKeys.indexOf(key) < 0) {
+      throw new ModesteError(
+        `${component[INTERNAL_VAR_NAME].name}: ${key} is required property of the component`
+      );
+    }
+  });
+
+  return true;
+}
+
 function setProps(component, props) {
   Object.keys(props).forEach(key => {
-    if (props[key] === undefined || props[key] === null) delete props[key];
+    if (props[key] === undefined) delete props[key];
   });
 
   let newProps = component[INTERNAL_VAR_NAME].defaultProps
     ? assign({}, component[INTERNAL_VAR_NAME].defaultProps, props)
     : props;
+
+  validateProps(newProps, component[INTERNAL_VAR_NAME].propList, component);
 
   if (component[INTERNAL_VAR_NAME].shouldUpdateProps(component[INTERNAL_VAR_NAME].props, newProps)) {
     component[INTERNAL_VAR_NAME].props = newProps;
@@ -495,15 +529,6 @@ function appendNewDomAndMount(vDom, parentDom, parentComponent) {
   }
 }
 
-class ModesteError extends Error {
-  constructor(...args) {
-    super(...args);
-    this.name = 'MODESTE Error';
-    this.message = '[MODESTE ERROR] ' + this.message;
-    Error.captureStackTrace(this, ModesteError);
-  }
-}
-
 function render(component) {
   if (component[INTERNAL_VAR_NAME].render) {
     if (!component[INTERNAL_VAR_NAME].mounted) emitHook(component, 'willMount');
@@ -584,31 +609,6 @@ function asyncRender(component, callback) {
   if (renderQueue.length === 1) asyncCall(flushRender, callback);
 }
 
-function validateProps(props, validationObject, component) {
-  let validationKeys = Object.keys(validationObject);
-  let propKeys = Object.keys(props);
-
-  propKeys.forEach(propName => {
-    if (validationKeys.indexOf(propName) < 0) {
-      throw new ModesteError(
-        `${component[INTERNAL_VAR_NAME].name}: ${propName} is not acceptable component property`
-      );
-    }
-  });
-
-  validationKeys.forEach(propName => {
-    if (validationKeys[propName] && propKeys.indexOf(propName) < 0) {
-      throw new ModesteError(
-        `${
-          component[INTERNAL_VAR_NAME].name
-        }: ${propName} is required property of the component`
-      );
-    }
-  });
-
-  return true;
-}
-
 class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
@@ -653,6 +653,11 @@ class Component {
     });
 
     if (manifest.props) {
+      Object.keys(props).forEach(key => {
+        if (props[key] === undefined) delete props[key];
+      });
+
+      this[INTERNAL_VAR_NAME].propList = manifest.props;
       this[INTERNAL_VAR_NAME].props = props ? props : {};
       this[INTERNAL_VAR_NAME].defaultProps = manifest.defaultProps;
 

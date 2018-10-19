@@ -55,6 +55,11 @@ export default class Component {
     });
 
     if (manifest.props) {
+      Object.keys(props).forEach(key => {
+        if (props[key] === undefined) delete props[key];
+      });
+
+      this[m].propList = manifest.props;
       this[m].props = props ? props : {};
       this[m].defaultProps = manifest.defaultProps;
 
