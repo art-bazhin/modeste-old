@@ -3,6 +3,7 @@
 'use strict';
 
 import e from '../../src/vDom/createElementNode';
+import c from '../../src/vDom/createComponentNode';
 import createDom from '../../src/dom/createDom';
 import updateDom from '../../src/dom/updateDom';
 import Modeste from '../../src/main';
@@ -141,12 +142,18 @@ test('Update component dom node', () => {
   let component = {
     scoped: false,
 
+    props: {
+      name: false
+    },
+
     render(e) {
-      return e('div', { id: 'component' }, [e('span', ['Hello world!'])]);
+      return e('div', { id: 'component' }, [
+        e('span', [`Hello ${this.name}!`])
+      ]);
     }
   };
 
-  new Modeste({
+  let app = new Modeste({
     selector: '#container',
 
     components: {
@@ -154,19 +161,87 @@ test('Update component dom node', () => {
     },
 
     render(e, c) {
-      return e('div', { id: 'app' }, [c('component')]);
+      return e('div', { id: 'app' }, [c('component', { name: 'world' })]);
+    }
+  });
+
+  let dom = document.getElementById('component');
+
+  let resultVDom = c('component', {
+    name: 'cruel world'
+  });
+  let resultDom = createDom(
+    e('div', { id: 'component' }, [e('span', ['Hello cruel world!'])])
+  );
+
+  updateDom(dom, resultVDom, app);
+
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
+});
+
+test('Update component root dom element', () => {
+  let container = document.createElement('div');
+  container.id = 'container';
+  document.body.appendChild(container);
+
+  let app = new Modeste({
+    selector: '#container',
+    scoped: false,
+
+    render(e) {
+      return e('div', { id: 'app' }, ['foo bar']);
+    }
+  });
+
+  let dom = document.getElementById('app');
+  let resultVDom = e('span', { id: 'app' }, ['foo bar']);
+  let resultDom = createDom(resultVDom);
+
+  updateDom(dom, resultVDom, app);
+  dom = document.getElementById('app');
+
+  expect(dom.outerHTML).toBe(resultDom.outerHTML);
+});
+
+test('Replace component dom node with element node', () => {
+  let container = document.createElement('div');
+  container.id = 'container';
+  document.body.appendChild(container);
+
+  let component = {
+    scoped: false,
+
+    props: {
+      name: false
+    },
+
+    render(e) {
+      return e('div', { id: 'component' }, [
+        e('span', [`Hello ${this.name}!`])
+      ]);
+    }
+  };
+
+  let app = new Modeste({
+    selector: '#container',
+
+    scoped: false,
+
+    components: {
+      component
+    },
+
+    render(e, c) {
+      return e('div', { id: 'app' }, [c('component', { name: 'world' })]);
     }
   });
 
   let appDom = document.getElementById('app');
-  let dom = appDom.firstChild;
-
-  let resultVDom = e('div', { id: 'component' }, [
-    e('span', ['Goodbye cruel world!'])
-  ]);
+  let dom = document.getElementById('component');
+  let resultVDom = e('span', ['foo bar']);
   let resultDom = createDom(resultVDom);
 
-  updateDom(dom, resultVDom);
+  updateDom(dom, resultVDom, app);
 
-  expect(dom.outerHTML).toBe(resultDom.outerHTML);
+  expect(appDom.firstChild.outerHTML).toBe(resultDom.outerHTML);
 });

@@ -380,15 +380,13 @@ function updateDom(dom, vDom, parentComponent) {
   }
 
   if (!sameTypeAndTag(dom, vDom)) {
-    if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
-      removeComponent(parentComponent[INTERNAL_VAR_NAME].children[dom[INTERNAL_VAR_NAME].id]);
-    }
-
     let newDom = createDom(vDom, parentComponent);
     dom.parentNode.replaceChild(newDom, dom);
 
     if (parentComponent && parentComponent[INTERNAL_VAR_NAME].dom === dom) {
       parentComponent[INTERNAL_VAR_NAME].dom = newDom;
+    } else if (dom[INTERNAL_VAR_NAME] && dom[INTERNAL_VAR_NAME].id) {
+      removeComponent(parentComponent[INTERNAL_VAR_NAME].children[dom[INTERNAL_VAR_NAME].id]);
     }
 
     return;

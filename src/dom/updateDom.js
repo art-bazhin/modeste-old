@@ -13,15 +13,13 @@ export default function updateDom(dom, vDom, parentComponent) {
   }
 
   if (!sameTypeAndTag(dom, vDom)) {
-    if (dom[m] && dom[m].id) {
-      removeComponent(parentComponent[m].children[dom[m].id]);
-    }
-
     let newDom = createDom(vDom, parentComponent);
     dom.parentNode.replaceChild(newDom, dom);
 
     if (parentComponent && parentComponent[m].dom === dom) {
       parentComponent[m].dom = newDom;
+    } else if (dom[m] && dom[m].id) {
+      removeComponent(parentComponent[m].children[dom[m].id]);
     }
 
     return;
