@@ -1,8 +1,14 @@
-export default function addClass(vDom, className) {
-  if (!vDom || typeof vDom === 'string' || vDom.component || !className) return;
-  if (!vDom.props.className) vDom.props.className = '';
-  if (!vDom.attrs.class) vDom.attrs.class = '';
+export default function addClass(vNode, className) {
+  if (
+    !vNode ||
+    typeof vNode === 'string' ||
+    vNode.type === 'component' ||
+    !className
+  )
+    return;
+  if (!vNode.props.className) vNode.props.className = '';
+  if (!vNode.attrs.class) vNode.attrs.class = '';
 
-  vDom.props.className = `${vDom.props.className} ${className}`.trim();
-  vDom.attrs.class = `${vDom.attrs.class} ${className}`.trim();
+  vNode.props.className = `${vNode.props.className} ${className}`.trim();
+  vNode.attrs.class = `${vNode.attrs.class} ${className}`.trim();
 }

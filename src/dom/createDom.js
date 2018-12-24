@@ -4,52 +4,52 @@ import createComponent from '../component/createComponent';
 import render from '../component/render';
 import emitMount from '../component/emitMount';
 
-export default function createDom(vDom, parent) {
-  if (parent) addClass(vDom, parent[m].scope);
+export default function createDom(vNode, parent) {
+  if (parent) addClass(vNode, parent[m].scope);
 
-  if (!vDom) {
+  if (!vNode) {
     return document.createComment('');
   }
 
-  switch (typeof vDom) {
+  switch (typeof vNode) {
     case 'string':
-      return document.createTextNode(vDom);
+      return document.createTextNode(vNode);
 
-    case 'object':
-      if (vDom.component) {
-        let component = createComponent(vDom.component, vDom.props, parent);
+    default:
+      if (vNode.type === 'component') {
+        let component = createComponent(vNode.name, vNode.props, parent);
 
-        if (vDom.ref) vDom.ref(component);
+        if (vNode.core.ref) vNode.core.ref(component);
 
         render(component);
 
-        if (vDom.key !== undefined) {
-          component[m].dom[m].key = vDom.key;
+        if (vNode.core.key !== undefined) {
+          component[m].dom[m].key = vNode.core.key;
         }
         return component[m].dom;
       }
 
-      let dom = document.createElement(vDom.tag);
+      let dom = document.createElement(vNode.name);
 
       dom[m] = {};
       dom[m].attrs = {};
       dom[m].props = {};
 
-      Object.keys(vDom.attrs).forEach(attr => {
-        if (vDom.attrs[attr] !== null) {
-          dom.setAttribute(attr, vDom.attrs[attr]);
-          dom[m].attrs[attr] = vDom.attrs[attr];
+      Object.keys(vNode.attrs).forEach(attr => {
+        if (vNode.attrs[attr] !== null) {
+          dom.setAttribute(attr, vNode.attrs[attr]);
+          dom[m].attrs[attr] = vNode.attrs[attr];
         }
       });
 
-      Object.keys(vDom.props).forEach(prop => {
-        if (vDom.props[prop] !== null) {
-          dom[prop] = vDom.props[prop];
-          dom[m].props[prop] = vDom.props[prop];
+      Object.keys(vNode.props).forEach(prop => {
+        if (vNode.props[prop] !== null) {
+          dom[prop] = vNode.props[prop];
+          dom[m].props[prop] = vNode.props[prop];
         }
       });
 
-      vDom.children.forEach(child => {
+      vNode.children.forEach(child => {
         let childDom = createDom(child, parent);
         dom.appendChild(childDom);
 
@@ -58,8 +58,8 @@ export default function createDom(vDom, parent) {
         }
       });
 
-      if (vDom.ref) vDom.ref(dom);
-      if (vDom.key !== undefined) dom[m].key = vDom.key;
+      if (vNode.core.ref) vNode.core.ref(dom);
+      if (vNode.core.key !== undefined) dom[m].key = vNode.core.key;
 
       return dom;
   }

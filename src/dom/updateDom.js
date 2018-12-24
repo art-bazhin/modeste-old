@@ -7,14 +7,14 @@ import removeComponent from '../component/removeComponent';
 import emitMount from '../component/emitMount';
 import isNullOrUndefined from '../utils/isNullOrUndefined';
 
-export default function updateDom(dom, vDom, parentComponent) {
-  if (vDom && vDom.component) {
-    updateComponentDom(dom, vDom, parentComponent);
+export default function updateDom(dom, vNode, parentComponent) {
+  if (vNode && vNode.type === 'component') {
+    updateComponentDom(dom, vNode, parentComponent);
     return;
   }
 
-  if (!sameTypeAndTag(dom, vDom)) {
-    let newDom = createDom(vDom, parentComponent);
+  if (!sameTypeAndTag(dom, vNode)) {
+    let newDom = createDom(vNode, parentComponent);
     dom.parentNode.replaceChild(newDom, dom);
 
     if (parentComponent && parentComponent[m].dom === dom) {
@@ -26,7 +26,7 @@ export default function updateDom(dom, vDom, parentComponent) {
     return;
   }
 
-  if (parentComponent) addClass(vDom, parentComponent[m].scope);
+  if (parentComponent) addClass(vNode, parentComponent[m].scope);
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
@@ -34,13 +34,13 @@ export default function updateDom(dom, vDom, parentComponent) {
       let attrs = dom[m].attrs ? Object.keys(dom[m].attrs) : [];
       dom[m].attrs = dom[m].attrs || {};
 
-      Object.keys(vDom.attrs).forEach(attr => {
-        if (isNullOrUndefined(vDom.attrs[attr])) {
+      Object.keys(vNode.attrs).forEach(attr => {
+        if (isNullOrUndefined(vNode.attrs[attr])) {
           dom.removeAttribute(attr);
           delete dom[m].attrs[attr];
-        } else if (dom[m].attrs[attr] !== vDom.attrs[attr]) {
-          dom.setAttribute(attr, vDom.attrs[attr]);
-          dom[m].attrs[attr] = vDom.attrs[attr];
+        } else if (dom[m].attrs[attr] !== vNode.attrs[attr]) {
+          dom.setAttribute(attr, vNode.attrs[attr]);
+          dom[m].attrs[attr] = vNode.attrs[attr];
         }
 
         let index = attrs.indexOf(attr);
@@ -58,13 +58,13 @@ export default function updateDom(dom, vDom, parentComponent) {
       let props = dom[m].props ? Object.keys(dom[m].props) : [];
       dom[m].props = dom[m].props || {};
 
-      Object.keys(vDom.props).forEach(prop => {
-        if (isNullOrUndefined(vDom.props[prop])) {
+      Object.keys(vNode.props).forEach(prop => {
+        if (isNullOrUndefined(vNode.props[prop])) {
           dom[prop] = null;
           delete dom[m].props[prop];
-        } else if (dom[m].props[prop] !== vDom.props[prop]) {
-          dom[prop] = vDom.props[prop];
-          dom[m].props[prop] = vDom.props[prop];
+        } else if (dom[m].props[prop] !== vNode.props[prop]) {
+          dom[prop] = vNode.props[prop];
+          dom[m].props[prop] = vNode.props[prop];
         }
 
         let index = props.indexOf(prop);
@@ -79,30 +79,33 @@ export default function updateDom(dom, vDom, parentComponent) {
       });
 
       // Process child nodes
-      let keyed = vDom.children[0] && vDom.children[0].key !== undefined;
+      let keyed =
+        vNode.children[0] &&
+        vNode.children[0].core &&
+        vNode.children[0].core.key !== undefined;
 
       if (keyed) {
         let nodes = {};
         let vNodes = {};
 
-        vDom.children.forEach(child => {
-          vNodes[child.key] = child;
+        vNode.children.forEach(child => {
+          vNodes[child.core.key] = child;
         });
 
         while (dom.firstChild) {
           nodes[dom.firstChild[m].key] = dom.removeChild(dom.firstChild);
         }
 
-        vDom.children.forEach(child => {
-          if (nodes[child.key]) {
-            dom.appendChild(nodes[child.key]);
-            updateDom(nodes[child.key], child, parentComponent);
+        vNode.children.forEach(child => {
+          if (nodes[child.core.key]) {
+            dom.appendChild(nodes[child.core.key]);
+            updateDom(nodes[child.core.key], child, parentComponent);
           } else {
             appendNewDomAndMount(child, dom, parentComponent);
           }
         });
       } else {
-        vDom.children.forEach((child, index) => {
+        vNode.children.forEach((child, index) => {
           if (!dom.childNodes[index]) {
             appendNewDomAndMount(child, dom, parentComponent);
           } else {
@@ -110,31 +113,31 @@ export default function updateDom(dom, vDom, parentComponent) {
           }
         });
 
-        while (dom.childNodes[vDom.children.length]) {
-          let child = dom.childNodes[vDom.children.length];
+        while (dom.childNodes[vNode.children.length]) {
+          let child = dom.childNodes[vNode.children.length];
           dom.removeChild(child);
         }
       }
 
       // Run ref function
-      if (vDom.ref) vDom.ref(dom);
+      if (vNode.core.ref) vNode.core.ref(dom);
 
       // Store the key
-      if (vDom.key) dom[m].key = vDom.key;
+      if (vNode.core.key) dom[m].key = vNode.core.key;
       else if (dom[m].key) delete dom[m].key;
 
       break;
 
     case TEXT_NODE:
-      if (dom.nodeValue !== vDom) {
-        dom.nodeValue = vDom;
+      if (dom.nodeValue !== vNode) {
+        dom.nodeValue = vNode;
       }
       break;
   }
 }
 
-function appendNewDomAndMount(vDom, parentDom, parentComponent) {
-  let childDom = createDom(vDom, parentComponent);
+function appendNewDomAndMount(vNode, parentDom, parentComponent) {
+  let childDom = createDom(vNode, parentComponent);
   parentDom.appendChild(childDom);
 
   if (

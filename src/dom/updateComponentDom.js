@@ -5,16 +5,16 @@ import render from '../component/render';
 import emitMount from '../component/emitMount';
 import removeComponent from '../component/removeComponent';
 
-export default function updateComponentDom(dom, vDom, parent) {
+export default function updateComponentDom(dom, vNode, parent) {
   if (dom[m] && dom[m].id) {
     let id = dom[m].id;
     let component = parent[m].children[id];
 
-    if (component[m].name === vDom.component) {
+    if (component[m].name === vNode.name) {
       component[m].dom = dom;
-      setProps(component, vDom.props);
+      setProps(component, vNode.props);
 
-      if (vDom.ref) vDom.ref(component);
+      if (vNode.core.ref) vNode.core.ref(component);
 
       return;
     } else {
@@ -22,14 +22,14 @@ export default function updateComponentDom(dom, vDom, parent) {
     }
   }
 
-  let component = createComponent(vDom.component, vDom.props, parent);
+  let component = createComponent(vNode.name, vNode.props, parent);
   component[m].dom = dom;
 
-  if (vDom.ref) vDom.ref(component);
+  if (vNode.core.ref) vNode.core.ref(component);
 
   render(component);
 
-  if (vDom.key !== undefined) component[m].dom[m].key = vDom.key;
+  if (vNode.core.key !== undefined) component[m].dom[m].key = vNode.core.key;
   else if (component[m].dom[m].key !== undefined)
     delete component[m].dom[m].key;
 

@@ -11,22 +11,22 @@ export default function render(component) {
     if (!component[m].mounted) emitHook(component, 'willMount');
     else emitHook(component, 'willUpdate');
 
-    let vDom = component[m].render(e, c);
+    let vNode = component[m].render(e, c);
 
-    if (typeof vDom !== 'object' || vDom.component || !vDom.tag) {
+    if (typeof vNode !== 'object' || vNode.type !== 'element') {
       throw new ModesteError(
-        `${component[m].name}: Component root must be a tag`
+        `${component[m].name}: Component root must be an HTML element`
       );
     }
 
     if (!component[m].dom) {
-      component[m].dom = createDom(vDom, component);
+      component[m].dom = createDom(vNode, component);
     } else {
       if (component[m].dom[m] && component[m].dom[m].key !== undefined) {
-        vDom.key = component[m].dom[m].key;
+        vNode.core.key = component[m].dom[m].key;
       }
 
-      updateDom(component[m].dom, vDom, component);
+      updateDom(component[m].dom, vNode, component);
     }
 
     component[m].dom[m].id = component[m].id;

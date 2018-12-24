@@ -1,18 +1,5 @@
-export default function createComponentNode(component, opts) {
-  let props = {};
-  let node = { component, props };
+import VNode from './VNode';
 
-  if (opts) {
-    Object.keys(opts).forEach(key => {
-      switch (key[0]) {
-        case '$':
-          node[key.substr(1)] = opts[key];
-          break;
-        default:
-          props[key] = opts[key];
-      }
-    });
-  }
-
-  return node;
+export default function createComponentNode(name, opts) {
+  return new VNode('component', name, opts);
 }
