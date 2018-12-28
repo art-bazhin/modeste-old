@@ -6,7 +6,8 @@ test('Creating a component vNode with a right component name', () => {
   let testNode;
 
   testNode = c('my-component');
-  expect(testNode.component).toBe('my-component');
+  expect(testNode.type).toBe('component');
+  expect(testNode.name).toBe('my-component');
 });
 
 test('Creating a component vNode with a right props and utility fields', () => {
@@ -26,7 +27,8 @@ test('Creating a component vNode with a right props and utility fields', () => {
     $someUtility: 1000
   });
 
-  expect(testNode.component).toBe('some-component');
+  expect(testNode.type).toBe('component');
+  expect(testNode.name).toBe('some-component');
 
   expect(testNode.props).toEqual({
     someProp: 'propValue',
@@ -40,6 +42,6 @@ test('Creating a component vNode with a right props and utility fields', () => {
     booleanProp: true
   });
 
-  expect(testNode.ref).toBe('refValue');
-  expect(testNode.someUtility).toBe(1000);
+  expect(testNode.core.ref).toBe('refValue');
+  expect(testNode.core.someUtility).toBe(1000);
 });

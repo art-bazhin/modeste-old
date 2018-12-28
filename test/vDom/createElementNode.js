@@ -6,13 +6,13 @@ test('Creating a tag vNode with a right tag name', () => {
   let testNode;
 
   testNode = e('div');
-  expect(testNode.tag).toBe('div');
+  expect(testNode.name).toBe('div');
 
   testNode = e('span');
-  expect(testNode.tag).toBe('span');
+  expect(testNode.name).toBe('span');
 
   testNode = e('p');
-  expect(testNode.tag).toBe('p');
+  expect(testNode.name).toBe('p');
 });
 
 test('Creating a tag vNode with a right props, attrs and utility fields', () => {
@@ -27,7 +27,7 @@ test('Creating a tag vNode with a right props, attrs and utility fields', () => 
     $someUtility: 1000
   });
 
-  expect(testNode.tag).toBe('div');
+  expect(testNode.name).toBe('div');
 
   expect(testNode.props).toEqual({
     className: 'test class names',
@@ -39,8 +39,8 @@ test('Creating a tag vNode with a right props, attrs and utility fields', () => 
     'aria-hidden': ''
   });
 
-  expect(testNode.ref).toBe('refValue');
-  expect(testNode.someUtility).toBe(1000);
+  expect(testNode.core.ref).toBe('refValue');
+  expect(testNode.core.someUtility).toBe(1000);
 });
 
 test('Creating a tag vNode with a right children', () => {
