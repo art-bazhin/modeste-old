@@ -5,14 +5,14 @@ import emitMount from './component/emitMount';
 import setProps from './component/setProps';
 
 export default class Modeste extends Component {
-  constructor(manifest, props) {
+  constructor(manifest, element, props) {
+    if (typeof element === 'string') element = document.querySelector(element);
+
     super(manifest, ROOT_NAME, props);
     this[m].isApp = true;
 
     if (manifest.style) addStyles(manifest.style(), this[m].scope);
-    this[m].wrap = manifest.selector
-      ? document.querySelector(manifest.selector)
-      : null;
+    this[m].wrap = element || null;
 
     this.$render();
   }
