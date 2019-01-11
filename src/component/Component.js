@@ -1,4 +1,4 @@
-import { INTERNAL_VAR_NAME as m } from '../constants';
+import { INTERNAL_VAR_NAME as m, ROOT_NAME } from '../constants';
 import shouldUpdateData from './shouldUpdateData';
 import shouldUpdateProps from './shouldUpdateProps';
 import registerHooks from './registerHooks';
@@ -16,9 +16,7 @@ export default class Component {
     let id = generateId();
     let scope = false;
 
-    if (manifest.scoped !== false) {
-      scope = manifest[m] ? manifest[m].scope : getScope(generateId());
-    }
+    if (manifest.scoped !== false) scope = manifest[m].scope;
 
     this[m] = {};
     registerHooks(this, manifest);

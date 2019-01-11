@@ -1,3 +1,3 @@
-export default function getScope(id) {
-  return `__${id}__`;
+export default function getScope(parentName, name) {
+  return `__${parentName}__${name}__`;
 }
