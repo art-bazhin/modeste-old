@@ -77,7 +77,7 @@ export default class Component {
     }
 
     if (manifest.data) {
-      this[m].data = manifest.data.bind(this)();
+      this[m].data = assign({}, manifest.data);
 
       Object.keys(this[m].data).forEach(prop => {
         this[m].subscribers[prop] = {};
