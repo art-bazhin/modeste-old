@@ -24,7 +24,7 @@ export default function registerComponent(parent, name, manifest) {
     }
 
     manifest[m] = { id, scope };
-    if (manifest.style) addStyles(manifest.style(), scope);
+    if (manifest.style) addStyles(manifest.style, scope);
 
     factories[id] = (name, props, parent) =>
       new Component(manifest, name, props, parent);
