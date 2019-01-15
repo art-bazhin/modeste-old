@@ -1,26 +1,54 @@
 import { INTERNAL_VAR_NAME as m } from '../constants';
 import ModesteError from '../utils/ModesteError';
 
-function validatePropType(prop, type, key, component, isFirstCheck) {
+function validatePropType(
+  prop,
+  type,
+  key,
+  component,
+  isFirstCheck,
+  throwErrors = true
+) {
   if (prop === null || type === 'any') return true;
+
+  if (type instanceof Array) {
+    let answer = false;
+
+    type.forEach(t => {
+      answer =
+        answer || validatePropType(prop, t, key, component, false, false);
+    });
+
+    if (!answer) {
+      throw new ModesteError(
+        `${component[m].name}: ${key} prop type must be one of ${type}`
+      );
+    }
+
+    return true;
+  }
 
   switch (typeof type) {
     case 'string':
       if (prop === undefined) return true;
       if (typeof prop !== type) {
-        throw new ModesteError(
-          `${component[m].name}: ${key} prop must be a type ${type}`
-        );
+        if (throwErrors)
+          new ModesteError(
+            `${component[m].name}: ${key} prop must be a type ${type}`
+          );
+        return false;
       }
       break;
     case 'function':
       if (prop === undefined) return true;
       if (!(prop instanceof type)) {
-        throw new ModesteError(
-          `${component[m].name}: ${key} prop must be an instance of ${
-            type.name
-          }`
-        );
+        if (throwErrors)
+          throw new ModesteError(
+            `${component[m].name}: ${key} prop must be an instance of ${
+              type.name
+            }`
+          );
+        return false;
       }
       break;
     default:
