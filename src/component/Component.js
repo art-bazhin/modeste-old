@@ -66,7 +66,7 @@ export default class Component {
         if (item.fields) {
           if (!(item.fields instanceof Array)) {
             throw new ModesteError(
-              `${this[m].name}: fields list must be an array`
+              `${this[m].name}: subscription fields list must be an array`
             );
           }
 
