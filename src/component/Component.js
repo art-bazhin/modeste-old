@@ -8,8 +8,8 @@ import render from './render';
 import asyncRender from './asyncRender';
 import generateId from '../utils/generateId';
 import assign from '../utils/assign';
-import getScope from './getScope';
 import validateProps from './validateProps';
+import getDefaultProps from './getDefaultProps';
 
 export default class Component {
   constructor(manifest, name, props, parent) {
@@ -59,10 +59,8 @@ export default class Component {
 
       this[m].propList = manifest.props;
       this[m].props = props ? props : {};
-      this[m].defaultProps = manifest.defaultProps;
-
-      if (this[m].defaultProps)
-        this[m].props = assign({}, this[m].defaultProps, this[m].props);
+      this[m].defaultProps = getDefaultProps(manifest.props);
+      this[m].props = assign({}, this[m].defaultProps, this[m].props);
 
       validateProps(this[m].props, manifest.props, this);
 
