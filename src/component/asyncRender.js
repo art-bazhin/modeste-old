@@ -19,5 +19,5 @@ function flushRender() {
 
 export default function asyncRender(component, callback) {
   renderQueue.push(component);
-  if (renderQueue.length === 1) asyncCall(flushRender, callback);
+  asyncCall(flushRender, callback);
 }
