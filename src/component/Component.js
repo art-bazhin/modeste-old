@@ -14,9 +14,6 @@ import getDefaultProps from './getDefaultProps';
 export default class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
-    let scope = false;
-
-    if (manifest.scoped !== false) scope = manifest[m].scope;
 
     this[m] = {};
     registerHooks(this, manifest);
@@ -29,7 +26,7 @@ export default class Component {
     this[m].factories = {};
     this[m].parent = parent;
     this[m].app = parent ? parent[m].app : this;
-    this[m].scope = scope;
+    this[m].scope = manifest[m].scope;
     this[m].children = {};
     this[m].props = {};
 
