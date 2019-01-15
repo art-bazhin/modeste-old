@@ -10,6 +10,7 @@ import generateId from '../utils/generateId';
 import assign from '../utils/assign';
 import validateProps from './validateProps';
 import getDefaultProps from './getDefaultProps';
+import ModesteError from '../utils/ModesteError';
 
 export default class Component {
   constructor(manifest, name, props, parent) {
@@ -41,12 +42,48 @@ export default class Component {
     this[m].shouldUpdateData = shouldUpdateData;
     this[m].shouldUpdateProps = shouldUpdateProps;
 
+    if (!(this[m].subscriptions instanceof Array)) {
+      throw new ModesteError(
+        `${this[m].name}: subscriptions list must be an array`
+      );
+    }
+
     this[m].subscriptions.forEach(item => {
-      let store = item.store;
-      item.fields.forEach(field => {
-        if (store[m].data.hasOwnProperty(field))
-          store[m].subscribers[field][id] = this;
-      });
+      if (
+        !(item instanceof Component) &&
+        (!item.store || !(item.store instanceof Component))
+      ) {
+        throw new ModesteError(
+          `${
+            this[m].name
+          }: subscription must be a component or contain component in the store field`
+        );
+      }
+
+      if (item.store) {
+        let store = item.store;
+
+        if (item.fields) {
+          if (!(item.fields instanceof Array)) {
+            throw new ModesteError(
+              `${this[m].name}: fields list must be an array`
+            );
+          }
+
+          item.fields.forEach(field => {
+            if (store[m].data.hasOwnProperty(field))
+              store[m].subscribers[field][id] = this;
+          });
+        } else {
+          Object.keys(store[m].data).forEach(
+            field => (store[m].subscribers[field][id] = this)
+          );
+        }
+      } else {
+        Object.keys(item[m].data).forEach(
+          field => (item[m].subscribers[field][id] = this)
+        );
+      }
     });
 
     if (manifest.props) {
