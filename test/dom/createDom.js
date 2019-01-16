@@ -137,10 +137,8 @@ test('Creating nested component nodes', () => {
   `);
 
   let nested = {
-    scoped: false,
-
     props: {
-      text: false
+      text: 'string'
     },
 
     render(e) {
@@ -149,8 +147,6 @@ test('Creating nested component nodes', () => {
   };
 
   let component = {
-    scoped: false,
-
     components: {
       nested
     },
@@ -207,7 +203,7 @@ test('Creating nested component nodes with key and ref options', () => {
     scoped: false,
 
     props: {
-      text: false
+      text: 'string'
     },
 
     render(e) {
@@ -216,8 +212,6 @@ test('Creating nested component nodes with key and ref options', () => {
   };
 
   let component = {
-    scoped: false,
-
     components: {
       nested
     },

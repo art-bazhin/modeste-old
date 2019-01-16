@@ -140,10 +140,8 @@ test('Update component dom node', () => {
   document.body.appendChild(container);
 
   let component = {
-    scoped: false,
-
     props: {
-      name: false
+      name: 'boolean'
     },
 
     render(e) {
@@ -153,17 +151,18 @@ test('Update component dom node', () => {
     }
   };
 
-  let app = new Modeste({
-    selector: '#container',
+  let app = new Modeste(
+    {
+      components: {
+        component
+      },
 
-    components: {
-      component
+      render(e, c) {
+        return e('div', { id: 'app' }, [c('component', { name: 'world' })]);
+      }
     },
-
-    render(e, c) {
-      return e('div', { id: 'app' }, [c('component', { name: 'world' })]);
-    }
-  });
+    '#container'
+  );
 
   let dom = document.getElementById('component');
 
@@ -184,14 +183,14 @@ test('Update component root dom element', () => {
   container.id = 'container';
   document.body.appendChild(container);
 
-  let app = new Modeste({
-    selector: '#container',
-    scoped: false,
-
-    render(e) {
-      return e('div', { id: 'app' }, ['foo bar']);
-    }
-  });
+  let app = new Modeste(
+    {
+      render(e) {
+        return e('div', { id: 'app' }, ['foo bar']);
+      }
+    },
+    '#container'
+  );
 
   let dom = document.getElementById('app');
   let resultVDom = e('span', { id: 'app' }, ['foo bar']);
@@ -212,7 +211,7 @@ test('Replace component dom node with element node', () => {
     scoped: false,
 
     props: {
-      name: false
+      name: 'string'
     },
 
     render(e) {
@@ -222,19 +221,18 @@ test('Replace component dom node with element node', () => {
     }
   };
 
-  let app = new Modeste({
-    selector: '#container',
+  let app = new Modeste(
+    {
+      components: {
+        component
+      },
 
-    scoped: false,
-
-    components: {
-      component
+      render(e, c) {
+        return e('div', { id: 'app' }, [c('component', { name: 'world' })]);
+      }
     },
-
-    render(e, c) {
-      return e('div', { id: 'app' }, [c('component', { name: 'world' })]);
-    }
-  });
+    '#container'
+  );
 
   let appDom = document.getElementById('app');
   let dom = document.getElementById('component');
