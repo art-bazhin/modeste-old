@@ -8,6 +8,8 @@ import emitMount from '../component/emitMount';
 import isNullOrUndefined from '../utils/isNullOrUndefined';
 
 export default function updateDom(dom, vNode, parentComponent) {
+  if (!dom[m]) dom[m] = {};
+
   if (vNode && vNode.type === 'component') {
     updateComponentDom(dom, vNode, parentComponent);
     return;
