@@ -10,7 +10,9 @@ const HOOKS = [
   'willRemove',
   'didRemove',
   'shouldUpdateData',
-  'shouldUpdateProps'
+  'didUpdateData',
+  'shouldUpdateProps',
+  'didUpdateProps'
 ];
 
 export default function registerHooks(component, manifest) {

@@ -120,8 +120,11 @@ export default class Component {
             return this[m].data[prop];
           },
           set: function(value) {
-            if (this[m].shouldUpdateData(this[m].data[prop], value)) {
+            if (this[m].shouldUpdateData(this[m].data[prop], value, prop)) {
+              let oldValue = this[m].data[prop];
               this[m].data[prop] = value;
+
+              emitHook(this, 'didUpdateData', oldValue, value, prop);
               asyncRender(this);
 
               let subscribers = this[m].subscribers[prop];
