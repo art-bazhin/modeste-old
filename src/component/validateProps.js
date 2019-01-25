@@ -33,7 +33,7 @@ function validatePropType(
       if (prop === undefined) return true;
       if (typeof prop !== type) {
         if (throwErrors)
-          new ModesteError(
+          throw new ModesteError(
             `${component[m].name}: ${key} prop must be a type ${type}`
           );
         return false;

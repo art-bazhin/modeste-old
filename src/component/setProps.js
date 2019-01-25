@@ -9,6 +9,8 @@ export default function setProps(component, props) {
     if (props[key] === undefined) delete props[key];
   });
 
+  validateProps(props, component[m].propList, component);
+
   let newProps = component[m].defaultProps
     ? assign({}, component[m].defaultProps, props)
     : props;

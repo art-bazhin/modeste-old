@@ -91,12 +91,13 @@ export default class Component {
         if (props[key] === undefined) delete props[key];
       });
 
+      this[m].props = props || {};
       this[m].propList = manifest.props;
-      this[m].props = props ? props : {};
-      this[m].defaultProps = getDefaultProps(manifest.props);
-      this[m].props = assign({}, this[m].defaultProps, this[m].props);
+      validateProps(this[m].props, this[m].propList, this);
 
-      validateProps(this[m].props, manifest.props, this);
+      this[m].defaultProps = getDefaultProps(this[m].propList);
+      this[m].props = assign({}, this[m].defaultProps, this[m].props);
+      validateProps(this[m].props, this[m].propList, this);
 
       Object.keys(manifest.props).forEach(prop => {
         Object.defineProperty(this, prop, {
