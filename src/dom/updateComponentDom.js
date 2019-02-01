@@ -14,7 +14,7 @@ export default function updateComponentDom(dom, vNode, parent) {
       component[m].dom = dom;
       setProps(component, vNode.props);
 
-      if (vNode.core.ref) vNode.core.ref(component);
+      if (vNode.props.$ref) vNode.props.$ref(component);
 
       return;
     } else {
@@ -25,11 +25,12 @@ export default function updateComponentDom(dom, vNode, parent) {
   let component = createComponent(vNode.name, vNode.props, parent);
   component[m].dom = dom;
 
-  if (vNode.core.ref) vNode.core.ref(component);
+  if (vNode.props.$ref) vNode.props.$ref(component);
 
   render(component);
 
-  if (vNode.core.key !== undefined) component[m].dom[m].key = vNode.core.key;
+  if (vNode.props.$key !== undefined)
+    component[m].dom[m].key = vNode.props.$key;
   else if (component[m].dom[m].key !== undefined)
     delete component[m].dom[m].key;
 

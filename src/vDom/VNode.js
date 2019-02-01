@@ -5,7 +5,6 @@ export default class VNode {
     this.type = type;
     this.name = name;
     this.props = {};
-    this.core = {};
 
     switch (type) {
       case 'element':
@@ -17,9 +16,6 @@ export default class VNode {
               case '_':
                 this.attrs[toKebabCase(key.substr(1))] = opts[key];
                 break;
-              case '$':
-                this.core[key.substr(1)] = opts[key];
-                break;
               default:
                 this.props[key] = opts[key];
             }
@@ -29,17 +25,7 @@ export default class VNode {
         break;
 
       case 'component':
-        if (opts)
-          Object.keys(opts).forEach(key => {
-            switch (key[0]) {
-              case '$':
-                this.core[key.substr(1)] = opts[key];
-                break;
-              default:
-                this.props[key] = opts[key];
-            }
-          });
-
+        if (opts) this.props = opts;
         break;
     }
   }

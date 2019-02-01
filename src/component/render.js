@@ -21,13 +21,13 @@ export default function render(component) {
   }
 
   if (!component[m].dom) {
-    component[m].dom = createDom(vNode, component);
+    component[m].dom = createDom(vNode, component, true);
   } else {
     if (component[m].dom[m] && component[m].dom[m].key !== undefined) {
-      vNode.core.key = component[m].dom[m].key;
+      vNode.props.$key = component[m].dom[m].key;
     }
 
-    updateDom(component[m].dom, vNode, component);
+    updateDom(component[m].dom, vNode, component, true);
   }
 
   component[m].dom[m].id = component[m].id;

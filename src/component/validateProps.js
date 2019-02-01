@@ -9,6 +9,12 @@ function validatePropType(
   isFirstCheck,
   throwErrors = true
 ) {
+  if (key[0] === '$') {
+    throw new ModesteError(
+      `${component[m].name}: prop names starting with "$" are reserved`
+    );
+  }
+
   if (prop === null || type === 'any') return true;
 
   if (type instanceof Array) {
@@ -86,7 +92,7 @@ export default function validateProps(props, validationObject, component) {
   let propKeys = Object.keys(props);
 
   propKeys.forEach(key => {
-    if (validationKeys.indexOf(key) < 0) {
+    if (key[0] !== '$' && validationKeys.indexOf(key) < 0) {
       throw new ModesteError(
         `${component[m].name}: ${key} is not acceptable component property`
       );

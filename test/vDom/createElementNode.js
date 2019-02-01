@@ -39,8 +39,8 @@ test('Creating a tag vNode with a right props, attrs and utility fields', () => 
     'aria-hidden': ''
   });
 
-  expect(testNode.core.ref).toBe('refValue');
-  expect(testNode.core.someUtility).toBe(1000);
+  expect(testNode.props.$ref).toBe('refValue');
+  expect(testNode.props.$someUtility).toBe(1000);
 });
 
 test('Creating a tag vNode with a right children', () => {

@@ -3,8 +3,9 @@ import createComponent from '../component/createComponent';
 import render from '../component/render';
 import emitMount from '../component/emitMount';
 import getScopedClassString from '../utils/getScopedClassString';
+import getRootClass from '../component/getRootClass';
 
-export default function createDom(vNode, parent) {
+export default function createDom(vNode, parent, isRoot) {
   if (!vNode) {
     return document.createComment('');
   }
@@ -17,12 +18,12 @@ export default function createDom(vNode, parent) {
       if (vNode.type === 'component') {
         let component = createComponent(vNode.name, vNode.props, parent);
 
-        if (vNode.core.ref) vNode.core.ref(component);
+        if (vNode.props.$ref) vNode.props.$ref(component);
 
         render(component);
 
-        if (vNode.core.key !== undefined) {
-          component[m].dom[m].key = vNode.core.key;
+        if (vNode.props.$key !== undefined) {
+          component[m].dom[m].key = vNode.props.$key;
         }
         return component[m].dom;
       }
@@ -33,6 +34,9 @@ export default function createDom(vNode, parent) {
       dom[m].attrs = {};
       dom[m].props = {};
 
+      let rootClass = isRoot ? getRootClass(parent) : '';
+      if (rootClass) rootClass = ' ' + rootClass;
+
       Object.keys(vNode.attrs).forEach(attr => {
         if (vNode.attrs[attr] !== null) {
           dom[m].attrs[attr] = vNode.attrs[attr];
@@ -41,7 +45,7 @@ export default function createDom(vNode, parent) {
             dom.setAttribute(
               attr,
               getScopedClassString(vNode.attrs[attr], parent.scope)
-            );
+            ) + rootClass;
           } else {
             dom.setAttribute(attr, vNode.attrs[attr]);
           }
@@ -53,10 +57,9 @@ export default function createDom(vNode, parent) {
           dom[m].props[prop] = vNode.props[prop];
 
           if (parent && prop === 'className') {
-            dom[prop] = getScopedClassString(
-              vNode.props[prop],
-              parent[m].scope
-            );
+            dom[prop] =
+              getScopedClassString(vNode.props[prop], parent[m].scope) +
+              rootClass;
           } else {
             dom[prop] = vNode.props[prop];
           }
@@ -72,8 +75,8 @@ export default function createDom(vNode, parent) {
         }
       });
 
-      if (vNode.core.ref) vNode.core.ref(dom);
-      if (vNode.core.key !== undefined) dom[m].key = vNode.core.key;
+      if (vNode.props.$ref) vNode.props.$ref(dom);
+      if (vNode.props.$key !== undefined) dom[m].key = vNode.props.$key;
 
       return dom;
   }

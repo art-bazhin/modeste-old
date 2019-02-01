@@ -1,19 +1,4 @@
-import { INTERNAL_VAR_NAME as m } from '../constants';
-
-const HOOKS = [
-  'willCreate',
-  'didCreate',
-  'willMount',
-  'didMount',
-  'willRedraw',
-  'didRedraw',
-  'willRemove',
-  'didRemove',
-  'shouldUpdateData',
-  'didUpdateData',
-  'shouldUpdateProps',
-  'didUpdateProps'
-];
+import { INTERNAL_VAR_NAME as m, HOOKS } from '../constants';
 
 export default function registerHooks(component, manifest) {
   HOOKS.forEach(hook => {

@@ -1,4 +1,4 @@
-import { INTERNAL_VAR_NAME as m, ROOT_NAME } from '../constants';
+import { INTERNAL_VAR_NAME as m, ROOT_NAME, CORE_PROPS } from '../constants';
 import shouldUpdateData from './shouldUpdateData';
 import shouldUpdateProps from './shouldUpdateProps';
 import registerHooks from './registerHooks';
@@ -29,7 +29,7 @@ export default class Component {
     this[m].app = parent ? parent[m].app : this;
     this[m].scope = manifest[m].scope;
     this[m].children = {};
-    this[m].props = {};
+    this[m].props = props || {};
 
     this[m].subscribers = {};
 
@@ -86,12 +86,20 @@ export default class Component {
       }
     });
 
+    CORE_PROPS.forEach(prop => {
+      Object.defineProperty(this, prop, {
+        enumerable: true,
+        get: function() {
+          return this[m].props[prop];
+        }
+      });
+    });
+
     if (manifest.props) {
       Object.keys(props).forEach(key => {
         if (props[key] === undefined) delete props[key];
       });
 
-      this[m].props = props || {};
       this[m].propList = manifest.props;
       validateProps(this[m].props, this[m].propList, this);
 

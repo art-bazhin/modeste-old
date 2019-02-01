@@ -6,8 +6,9 @@ import removeComponent from '../component/removeComponent';
 import emitMount from '../component/emitMount';
 import isNullOrUndefined from '../utils/isNullOrUndefined';
 import getScopedClassString from '../utils/getScopedClassString';
+import getRootClass from '../component/getRootClass';
 
-export default function updateDom(dom, vNode, parentComponent) {
+export default function updateDom(dom, vNode, parentComponent, isRoot) {
   if (!dom[m]) dom[m] = {};
 
   if (vNode && vNode.type === 'component') {
@@ -30,6 +31,9 @@ export default function updateDom(dom, vNode, parentComponent) {
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
+      let rootClass = isRoot ? getRootClass(parent) : '';
+      if (rootClass) rootClass = ' ' + rootClass;
+
       // Process attrs
       let attrs = dom[m].attrs ? Object.keys(dom[m].attrs) : [];
       dom[m].attrs = dom[m].attrs || {};
@@ -44,7 +48,8 @@ export default function updateDom(dom, vNode, parentComponent) {
           if (parentComponent && attr === 'class') {
             dom.setAttribute(
               attr,
-              getScopedClassString(vNode.attrs[attr], parentComponent.scope)
+              getScopedClassString(vNode.attrs[attr], parentComponent.scope) +
+                rootClass
             );
           } else {
             dom.setAttribute(attr, vNode.attrs[attr]);
@@ -74,10 +79,11 @@ export default function updateDom(dom, vNode, parentComponent) {
           dom[m].props[prop] = vNode.props[prop];
 
           if (parentComponent && prop === 'className') {
-            dom[prop] = getScopedClassString(
-              vNode.props[prop],
-              parentComponent[m].scope
-            );
+            dom[prop] =
+              getScopedClassString(
+                vNode.props[prop],
+                parentComponent[m].scope
+              ) + rootClass;
           } else {
             dom[prop] = vNode.props[prop];
           }
@@ -97,15 +103,15 @@ export default function updateDom(dom, vNode, parentComponent) {
       // Process child nodes
       let keyed =
         vNode.children[0] &&
-        vNode.children[0].core &&
-        vNode.children[0].core.key !== undefined;
+        vNode.children[0].props &&
+        vNode.children[0].props.$key !== undefined;
 
       if (keyed) {
         let nodes = {};
         let vNodes = {};
 
         vNode.children.forEach(child => {
-          vNodes[child.core.key] = child;
+          vNodes[child.props.$key] = child;
         });
 
         while (dom.firstChild) {
@@ -113,9 +119,9 @@ export default function updateDom(dom, vNode, parentComponent) {
         }
 
         vNode.children.forEach(child => {
-          if (nodes[child.core.key]) {
-            dom.appendChild(nodes[child.core.key]);
-            updateDom(nodes[child.core.key], child, parentComponent);
+          if (nodes[child.props.$key]) {
+            dom.appendChild(nodes[child.props.$key]);
+            updateDom(nodes[child.props.$key], child, parentComponent);
           } else {
             appendNewDomAndMount(child, dom, parentComponent);
           }
@@ -136,10 +142,10 @@ export default function updateDom(dom, vNode, parentComponent) {
       }
 
       // Run ref function
-      if (vNode.core.ref) vNode.core.ref(dom);
+      if (vNode.props.$ref) vNode.props.$ref(dom);
 
       // Store the key
-      if (vNode.core.key) dom[m].key = vNode.core.key;
+      if (vNode.props.$key) dom[m].key = vNode.props.$key;
       else if (dom[m].key) delete dom[m].key;
 
       break;

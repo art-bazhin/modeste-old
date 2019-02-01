@@ -42,6 +42,6 @@ test('Creating a component vNode with a right props and utility fields', () => {
     booleanProp: true
   });
 
-  expect(testNode.core.ref).toBe('refValue');
-  expect(testNode.core.someUtility).toBe(1000);
+  expect(testNode.props.$ref).toBe('refValue');
+  expect(testNode.props.$someUtility).toBe(1000);
 });
