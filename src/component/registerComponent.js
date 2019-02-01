@@ -10,14 +10,12 @@ let appCounter = 0;
 export default function registerComponent(parent, name, manifest) {
   if (!manifest[m]) {
     let id = generateId();
-    let scope = false;
-
-    if (manifest.style && manifest.style.indexOf(':scoped') > -1) scope = true;
+    let scope;
 
     if (parent) {
-      scope = scope && getScope(parent[m].name, name);
+      scope = getScope(parent[m].name, name);
     } else {
-      scope = scope && getScope('app-' + appCounter.toString(36), name);
+      scope = getScope('app-' + appCounter.toString(36), name);
       appCounter++;
     }
 

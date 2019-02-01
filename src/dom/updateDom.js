@@ -1,11 +1,11 @@
 import { INTERNAL_VAR_NAME as m, ELEMENT_NODE, TEXT_NODE } from '../constants';
-import addClass from '../vDom/addClass';
 import sameTypeAndTag from './sameTypeAndTag';
 import updateComponentDom from './updateComponentDom';
 import createDom from './createDom';
 import removeComponent from '../component/removeComponent';
 import emitMount from '../component/emitMount';
 import isNullOrUndefined from '../utils/isNullOrUndefined';
+import getScopedClassString from '../utils/getScopedClassString';
 
 export default function updateDom(dom, vNode, parentComponent) {
   if (!dom[m]) dom[m] = {};
@@ -28,8 +28,6 @@ export default function updateDom(dom, vNode, parentComponent) {
     return;
   }
 
-  if (parentComponent) addClass(vNode, parentComponent[m].scope);
-
   switch (dom.nodeType) {
     case ELEMENT_NODE:
       // Process attrs
@@ -41,8 +39,16 @@ export default function updateDom(dom, vNode, parentComponent) {
           dom.removeAttribute(attr);
           delete dom[m].attrs[attr];
         } else if (dom[m].attrs[attr] !== vNode.attrs[attr]) {
-          dom.setAttribute(attr, vNode.attrs[attr]);
           dom[m].attrs[attr] = vNode.attrs[attr];
+
+          if (parentComponent && attr === 'class') {
+            dom.setAttribute(
+              attr,
+              getScopedClassString(vNode.attrs[attr], parentComponent.scope)
+            );
+          } else {
+            dom.setAttribute(attr, vNode.attrs[attr]);
+          }
         }
 
         let index = attrs.indexOf(attr);
@@ -65,8 +71,16 @@ export default function updateDom(dom, vNode, parentComponent) {
           dom[prop] = null;
           delete dom[m].props[prop];
         } else if (dom[m].props[prop] !== vNode.props[prop]) {
-          dom[prop] = vNode.props[prop];
           dom[m].props[prop] = vNode.props[prop];
+
+          if (parentComponent && prop === 'className') {
+            dom[prop] = getScopedClassString(
+              vNode.props[prop],
+              parentComponent[m].scope
+            );
+          } else {
+            dom[prop] = vNode.props[prop];
+          }
         }
 
         let index = props.indexOf(prop);

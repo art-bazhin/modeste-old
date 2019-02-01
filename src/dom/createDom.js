@@ -1,12 +1,10 @@
 import { INTERNAL_VAR_NAME as m } from '../constants';
-import addClass from '../vDom/addClass';
 import createComponent from '../component/createComponent';
 import render from '../component/render';
 import emitMount from '../component/emitMount';
+import getScopedClassString from '../utils/getScopedClassString';
 
 export default function createDom(vNode, parent) {
-  if (parent) addClass(vNode, parent[m].scope);
-
   if (!vNode) {
     return document.createComment('');
   }
@@ -37,15 +35,31 @@ export default function createDom(vNode, parent) {
 
       Object.keys(vNode.attrs).forEach(attr => {
         if (vNode.attrs[attr] !== null) {
-          dom.setAttribute(attr, vNode.attrs[attr]);
           dom[m].attrs[attr] = vNode.attrs[attr];
+
+          if (parent && attr === 'class') {
+            dom.setAttribute(
+              attr,
+              getScopedClassString(vNode.attrs[attr], parent.scope)
+            );
+          } else {
+            dom.setAttribute(attr, vNode.attrs[attr]);
+          }
         }
       });
 
       Object.keys(vNode.props).forEach(prop => {
         if (vNode.props[prop] !== null) {
-          dom[prop] = vNode.props[prop];
           dom[m].props[prop] = vNode.props[prop];
+
+          if (parent && prop === 'className') {
+            dom[prop] = getScopedClassString(
+              vNode.props[prop],
+              parent[m].scope
+            );
+          } else {
+            dom[prop] = vNode.props[prop];
+          }
         }
       });
 

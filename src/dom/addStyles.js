@@ -4,8 +4,8 @@ export default function addStyles(style, scope) {
   let styleElement = document.createElement('style');
 
   if (scope) {
-    let regex = /:scoped([^\w\d])/gm;
-    let repl = '.' + scope + '$1';
+    let regex = /\._/gm;
+    let repl = '.' + scope;
 
     styleElement.textContent = style.replace(regex, repl);
   } else {
