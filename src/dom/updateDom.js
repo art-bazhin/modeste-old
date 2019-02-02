@@ -31,7 +31,7 @@ export default function updateDom(dom, vNode, parentComponent, isRoot) {
 
   switch (dom.nodeType) {
     case ELEMENT_NODE:
-      let rootClass = isRoot ? getRootClass(parent) : '';
+      let rootClass = isRoot ? getRootClass(parentComponent) : '';
       if (rootClass) rootClass = ' ' + rootClass;
 
       // Process attrs
