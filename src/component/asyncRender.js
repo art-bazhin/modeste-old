@@ -8,8 +8,8 @@ let rendered = {};
 function flushRender() {
   renderQueue.forEach(component => {
     if (!rendered[component[m].id]) {
-      render(component);
       rendered[component[m].id] = true;
+      render(component);
     }
   });
 

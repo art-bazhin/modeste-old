@@ -5,6 +5,7 @@ import c from '../vDom/createComponentNode';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
 import ModesteError from '../utils/ModesteError';
+import throwError from '../utils/throwError';
 
 export default function render(component) {
   if (!component[m].render) return;
@@ -15,9 +16,7 @@ export default function render(component) {
   let vNode = component[m].render(e, c);
 
   if (typeof vNode !== 'object' || vNode.type !== 'element') {
-    throw new ModesteError(
-      `${component[m].name}: Component root must be an HTML element`
-    );
+    throwError('component root must be an HTML element', component);
   }
 
   if (!component[m].dom) {

@@ -23,6 +23,7 @@ export default function setProps(component, props) {
 
     emitHook(component, 'didUpdateProps', oldProps, newProps);
 
+    console.log(component[m].name);
     render(component);
   }
 }

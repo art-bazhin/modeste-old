@@ -11,6 +11,7 @@ import assign from '../utils/assign';
 import validateProps from './validateProps';
 import getDefaultProps from './getDefaultProps';
 import ModesteError from '../utils/ModesteError';
+import throwError from '../utils/throwError';
 
 export default class Component {
   constructor(manifest, name, props, parent) {
@@ -43,9 +44,7 @@ export default class Component {
     this[m].shouldUpdateProps = shouldUpdateProps;
 
     if (!(this[m].subscriptions instanceof Array)) {
-      throw new ModesteError(
-        `${this[m].name}: subscriptions list must be an array`
-      );
+      throwError('subscriptions list must be an array', this);
     }
 
     this[m].subscriptions.forEach(item => {
@@ -53,10 +52,9 @@ export default class Component {
         !(item instanceof Component) &&
         (!item.store || !(item.store instanceof Component))
       ) {
-        throw new ModesteError(
-          `${
-            this[m].name
-          }: subscription must be a component or contain component in the store field`
+        throwError(
+          'subscription must be a component or contain component in the store field',
+          this
         );
       }
 
@@ -65,9 +63,7 @@ export default class Component {
 
         if (item.fields) {
           if (!(item.fields instanceof Array)) {
-            throw new ModesteError(
-              `${this[m].name}: subscription fields list must be an array`
-            );
+            throwError('subscription fields list must be an array', this);
           }
 
           item.fields.forEach(field => {
@@ -95,14 +91,14 @@ export default class Component {
       });
     });
 
+    Object.keys(this[m].props).forEach(key => {
+      if (props[key] === undefined) delete props[key];
+    });
+
+    this[m].propList = manifest.props || null;
+    validateProps(this[m].props, this[m].propList, this);
+
     if (manifest.props) {
-      Object.keys(props).forEach(key => {
-        if (props[key] === undefined) delete props[key];
-      });
-
-      this[m].propList = manifest.props;
-      validateProps(this[m].props, this[m].propList, this);
-
       this[m].defaultProps = getDefaultProps(this[m].propList);
       this[m].props = assign({}, this[m].defaultProps, this[m].props);
       validateProps(this[m].props, this[m].propList, this);
