@@ -4,7 +4,6 @@ import e from '../vDom/createElementNode';
 import c from '../vDom/createComponentNode';
 import createDom from '../dom/createDom';
 import updateDom from '../dom/updateDom';
-import ModesteError from '../utils/ModesteError';
 import throwError from '../utils/throwError';
 
 export default function render(component) {

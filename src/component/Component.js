@@ -10,7 +10,6 @@ import generateId from '../utils/generateId';
 import assign from '../utils/assign';
 import validateProps from './validateProps';
 import getDefaultProps from './getDefaultProps';
-import ModesteError from '../utils/ModesteError';
 import throwError from '../utils/throwError';
 
 export default class Component {

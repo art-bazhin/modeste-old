@@ -1,5 +1,4 @@
 import { INTERNAL_VAR_NAME as m, CORE_PROPS } from '../constants';
-import ModesteError from '../utils/ModesteError';
 import throwError from '../utils/throwError';
 
 function validatePropType(
