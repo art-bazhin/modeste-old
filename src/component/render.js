@@ -14,7 +14,10 @@ export default function render(component) {
 
   let vNode = component[m].render(e, c);
 
-  if (typeof vNode !== 'object' || vNode.type !== 'element') {
+  if (
+    MODESTE_ENV === 'development' &&
+    (typeof vNode !== 'object' || vNode.type !== 'element')
+  ) {
     throwError('component root must be an HTML element', component);
   }
 

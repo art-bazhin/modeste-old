@@ -42,12 +42,16 @@ export default class Component {
     this[m].shouldUpdateData = shouldUpdateData;
     this[m].shouldUpdateProps = shouldUpdateProps;
 
-    if (!(this[m].subscriptions instanceof Array)) {
+    if (
+      MODESTE_ENV === 'development' &&
+      !(this[m].subscriptions instanceof Array)
+    ) {
       throwError('subscriptions list must be an array', this);
     }
 
     this[m].subscriptions.forEach(item => {
       if (
+        MODESTE_ENV === 'development' &&
         !(item instanceof Component) &&
         (!item.store || !(item.store instanceof Component))
       ) {
@@ -61,7 +65,7 @@ export default class Component {
         let store = item.store;
 
         if (item.fields) {
-          if (!(item.fields instanceof Array)) {
+          if (MODESTE_ENV === 'development' && item.fields instanceof Array) {
             throwError('subscription fields list must be an array', this);
           }
 
@@ -95,12 +99,14 @@ export default class Component {
     });
 
     this[m].propList = manifest.props || null;
-    validateProps(this[m].props, this[m].propList, this);
+    if (MODESTE_ENV === 'development')
+      validateProps(this[m].props, this[m].propList, this);
 
     if (manifest.props) {
       this[m].defaultProps = getDefaultProps(this[m].propList);
       this[m].props = assign({}, this[m].defaultProps, this[m].props);
-      validateProps(this[m].props, this[m].propList, this);
+      if (MODESTE_ENV === 'development')
+        validateProps(this[m].props, this[m].propList, this);
 
       Object.keys(manifest.props).forEach(prop => {
         Object.defineProperty(this, prop, {
