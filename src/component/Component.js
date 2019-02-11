@@ -12,11 +12,44 @@ import validateProps from './validateProps';
 import getDefaultProps from './getDefaultProps';
 import throwError from '../utils/throwError';
 
+function defineProp(obj, key) {
+  Object.defineProperty(obj, key, {
+    enumerable: true,
+    get: function() {
+      return this[m].props[key];
+    }
+  });
+}
+
+function defineData(obj, key) {
+  Object.defineProperty(obj, key, {
+    enumerable: true,
+    get: function() {
+      return this[m].data[key];
+    },
+    set: function(value) {
+      if (this[m].shouldUpdateData(this[m].data[key], value, key)) {
+        let oldValue = this[m].data[key];
+        this[m].data[key] = value;
+
+        emitHook(this, 'didUpdateData', oldValue, value, key);
+        asyncRender(this);
+
+        let subscribers = this[m].subscribers[key];
+        Object.keys(subscribers).forEach(key => asyncRender(subscribers[key]));
+      }
+    }
+  });
+}
+
 export default class Component {
   constructor(manifest, name, props, parent) {
     let id = generateId();
 
     this[m] = {};
+    this[m].shouldUpdateData = shouldUpdateData;
+    this[m].shouldUpdateProps = shouldUpdateProps;
+
     registerHooks(this, manifest);
     emitHook(this, 'willCreate');
 
@@ -38,9 +71,6 @@ export default class Component {
       : [];
 
     this[m].render = manifest.render ? manifest.render.bind(this) : null;
-
-    this[m].shouldUpdateData = shouldUpdateData;
-    this[m].shouldUpdateProps = shouldUpdateProps;
 
     if (
       MODESTE_ENV === 'development' &&
@@ -85,19 +115,6 @@ export default class Component {
       }
     });
 
-    CORE_PROPS.forEach(prop => {
-      Object.defineProperty(this, prop, {
-        enumerable: true,
-        get: function() {
-          return this[m].props[prop];
-        }
-      });
-    });
-
-    Object.keys(this[m].props).forEach(key => {
-      if (props[key] === undefined) delete props[key];
-    });
-
     this[m].propList = manifest.props || null;
     if (MODESTE_ENV === 'development')
       validateProps(this[m].props, this[m].propList, this);
@@ -108,14 +125,7 @@ export default class Component {
       if (MODESTE_ENV === 'development')
         validateProps(this[m].props, this[m].propList, this);
 
-      Object.keys(manifest.props).forEach(prop => {
-        Object.defineProperty(this, prop, {
-          enumerable: true,
-          get: function() {
-            return this[m].props[prop];
-          }
-        });
-      });
+      Object.keys(manifest.props).forEach(prop => defineProp(this, prop));
     }
 
     if (manifest.data) {
@@ -123,27 +133,7 @@ export default class Component {
 
       Object.keys(this[m].data).forEach(prop => {
         this[m].subscribers[prop] = {};
-
-        Object.defineProperty(this, prop, {
-          enumerable: true,
-          get: function() {
-            return this[m].data[prop];
-          },
-          set: function(value) {
-            if (this[m].shouldUpdateData(this[m].data[prop], value, prop)) {
-              let oldValue = this[m].data[prop];
-              this[m].data[prop] = value;
-
-              emitHook(this, 'didUpdateData', oldValue, value, prop);
-              asyncRender(this);
-
-              let subscribers = this[m].subscribers[prop];
-              Object.keys(subscribers).forEach(key =>
-                asyncRender(subscribers[key])
-              );
-            }
-          }
-        });
+        defineData(this, prop);
       });
     }
 
